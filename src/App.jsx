@@ -44,7 +44,7 @@ function App() {
       // 2. Initialize Gemini API safely inside the try block
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash",
         systemInstruction:
           "Your name is J.A.R.V.I.S. You are a highly advanced, intelligent, and helpful AI assistant. You speak in a concise, professional, and slightly analytical tone. You occasionally use very dry British humor, similar to the AI from Iron Man. Address the user respectfully as 'Sir' or 'Boss'.",
       });
