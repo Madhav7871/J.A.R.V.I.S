@@ -9,19 +9,12 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family:
-    "Inter",
-    -apple-system,
-    sans-serif;
+  font-family: 'Inter', -apple-system, sans-serif;
 }
 
 body {
   background-color: var(--dark-bg);
-  background-image: radial-gradient(
-    circle at 50% 0%,
-    #0a192f 0%,
-    var(--dark-bg) 60%
-  );
+  background-image: radial-gradient(circle at 50% 0%, #0a192f 0%, var(--dark-bg) 60%);
   color: white;
   height: 100vh;
   display: flex;
@@ -49,9 +42,7 @@ body {
   border-radius: 20px;
   display: flex;
   flex-direction: column;
-  box-shadow:
-    0 0 30px rgba(0, 243, 255, 0.05),
-    inset 0 0 20px rgba(0, 243, 255, 0.02);
+  box-shadow: 0 0 30px rgba(0, 243, 255, 0.05), inset 0 0 20px rgba(0, 243, 255, 0.02);
   overflow: hidden;
 }
 
@@ -73,15 +64,9 @@ body {
 }
 
 @keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(0, 243, 255, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(0, 243, 255, 0);
-  }
+  0% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.7); }
+  70% { box-shadow: 0 0 0 10px rgba(0, 243, 255, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0); }
 }
 
 .header h1 {
@@ -101,7 +86,6 @@ body {
   gap: 15px;
 }
 
-/* Custom Scrollbar */
 .chat-box::-webkit-scrollbar {
   width: 6px;
 }
@@ -120,14 +104,8 @@ body {
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .message.user {
@@ -199,4 +177,35 @@ body {
   cursor: not-allowed;
   border-color: var(--glass-border);
   color: var(--glass-border);
+}
+
+/* Personality Selector Styles */
+.header-controls {
+  margin-left: auto;
+}
+
+.personality-selector {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid var(--glass-border);
+  color: var(--neon-blue);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  backdrop-filter: blur(5px);
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.personality-selector:hover, .personality-selector:focus {
+  border-color: var(--neon-blue);
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+}
+
+.personality-selector option {
+  background: var(--dark-bg);
+  color: white;
 }
