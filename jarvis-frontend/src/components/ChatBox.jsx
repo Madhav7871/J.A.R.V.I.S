@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 
+// Notice the curly braces around { messages, isLoading }!
 const ChatBox = ({ messages, isLoading }) => {
   const messagesEndRef = useRef(null);
 
@@ -10,6 +11,11 @@ const ChatBox = ({ messages, isLoading }) => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Safety check: if messages somehow isn't an array, don't crash the app
+  if (!Array.isArray(messages)) {
+    return <div className="chat-box">System booting...</div>;
+  }
 
   return (
     <div className="chat-box">

@@ -7,6 +7,7 @@ const Header = ({ activePersonality, onSwitch, personalities }) => {
       <h1>J.A.R.V.I.S. Interface</h1>
       
       <div className="header-controls">
+        {/* Notice the curly braces around onSwitch below! */}
         <select 
           className="personality-selector"
           value={activePersonality}

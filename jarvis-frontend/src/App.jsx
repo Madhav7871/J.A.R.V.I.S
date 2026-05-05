@@ -77,11 +77,23 @@ function App() {
     }
   };
 
-  return (
+ return (
     <div className="jarvis-container">
-      <Header activePersonality="{activePersonality}" onSwitch="{handlePersonalitySwitch}" personalities="{personalities}"/>
-      <ChatBox messages="{messages}" isLoading="{isLoading}"/>
-      <InputArea input="{input}" setInput="{setInput}" handleSend="{handleSend}" isLoading="{isLoading}"/>
+      <Header 
+        activePersonality={activePersonality} 
+        onSwitch={handlePersonalitySwitch} 
+        personalities={personalities} 
+      />
+      <ChatBox 
+        messages={messages} 
+        isLoading={isLoading} 
+      />
+      <InputArea 
+        input={input} 
+        setInput={setInput} 
+        handleSend={handleSend} 
+        isLoading={isLoading} 
+      />
     </div>
   );
 }
