@@ -1,21 +1,32 @@
 const express = require('express');
 const cors = require('cors');
-require('dotenv').config();
+// This line loads the .env file
+require('dotenv').config(); 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
-// Allow your frontend to talk to this backend
 app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
+const apiKey = process.env.GEMINI_API_KEY;
 
-// Initialize Gemini with the hidden key
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// --- DEBUGGING TRACKER ---
+if (!apiKey) {
+  console.log("🚨 ALARM: API KEY IS MISSING! Node.js cannot see your .env file!");
+} else {
+  console.log("✅ SUCCESS: API Key loaded properly!");
+}
+// -------------------------
+
+const genAI = new GoogleGenerativeAI(apiKey);
 
 app.post('/api/chat', async (req, res) => {
   try {
-    // Receive the message, history, and personality from the frontend
+    if (!apiKey) {
+      throw new Error("Backend has no API key. Please check your .env file setup.");
+    }
+
     const { message, history, instruction } = req.body;
 
     const model = genAI.getGenerativeModel({
@@ -27,7 +38,6 @@ app.post('/api/chat', async (req, res) => {
     const result = await chat.sendMessage(message);
     const text = result.response.text();
 
-    // Send the response back to the frontend
     res.json({ response: text });
   } catch (error) {
     console.error("Backend Error:", error);
