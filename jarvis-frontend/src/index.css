@@ -9,12 +9,19 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: 'Inter', -apple-system, sans-serif;
+  font-family:
+    "Inter",
+    -apple-system,
+    sans-serif;
 }
 
 body {
   background-color: var(--dark-bg);
-  background-image: radial-gradient(circle at 50% 0%, #0a192f 0%, var(--dark-bg) 60%);
+  background-image: radial-gradient(
+    circle at 50% 0%,
+    #0a192f 0%,
+    var(--dark-bg) 60%
+  );
   color: white;
   height: 100vh;
   display: flex;
@@ -42,7 +49,9 @@ body {
   border-radius: 20px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 0 30px rgba(0, 243, 255, 0.05), inset 0 0 20px rgba(0, 243, 255, 0.02);
+  box-shadow:
+    0 0 30px rgba(0, 243, 255, 0.05),
+    inset 0 0 20px rgba(0, 243, 255, 0.02);
   overflow: hidden;
 }
 
@@ -64,9 +73,15 @@ body {
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.7); }
-  70% { box-shadow: 0 0 0 10px rgba(0, 243, 255, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0); }
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 243, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 243, 255, 0);
+  }
 }
 
 .header h1 {
@@ -104,8 +119,14 @@ body {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message.user {
@@ -153,7 +174,7 @@ body {
   box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
 }
 
-.input-area button {
+.input-area button[type="submit"] {
   background: rgba(0, 243, 255, 0.1);
   border: 1px solid var(--neon-blue);
   color: var(--neon-blue);
@@ -166,13 +187,13 @@ body {
   transition: all 0.3s ease;
 }
 
-.input-area button:hover:not(:disabled) {
+.input-area button[type="submit"]:hover:not(:disabled) {
   background: var(--neon-blue);
   color: #000;
   box-shadow: 0 0 15px var(--neon-blue);
 }
 
-.input-area button:disabled {
+.input-area button[type="submit"]:disabled {
   opacity: 0.5;
   cursor: not-allowed;
   border-color: var(--glass-border);
@@ -200,7 +221,8 @@ body {
   letter-spacing: 1px;
 }
 
-.personality-selector:hover, .personality-selector:focus {
+.personality-selector:hover,
+.personality-selector:focus {
   border-color: var(--neon-blue);
   box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
 }
@@ -208,4 +230,61 @@ body {
 .personality-selector option {
   background: var(--dark-bg);
   color: white;
+}
+
+/* Voice Arc Reactor Styles */
+.voice-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  width: 50px;
+  height: 50px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.voice-button.listening .arc-ring {
+  animation:
+    spin 1s linear infinite,
+    pulse-glow 1s ease-in-out infinite;
+  border-color: #ff003c;
+  box-shadow: 0 0 20px #ff003c;
+}
+
+.arc-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--neon-blue);
+  border-top-color: transparent;
+  border-bottom-color: transparent;
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+  transition: all 0.3s ease;
+}
+
+.voice-button:hover .arc-ring {
+  animation: spin 3s linear infinite;
+}
+
+@keyframes spin {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse-glow {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.1) rotate(180deg);
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+  }
 }
