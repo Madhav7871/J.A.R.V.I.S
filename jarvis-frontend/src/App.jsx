@@ -30,7 +30,6 @@ const personalities = {
 
 function App() {
   const [input, setInput] = useState("");
-  // Setting 'buddy' as default because it's awesome
   const [activePersonality, setActivePersonality] = useState("buddy");
   const [messages, setMessages] = useState([
     { role: "jarvis", text: personalities["buddy"].greeting },
@@ -43,15 +42,17 @@ function App() {
     setMessages([{ role: "jarvis", text: personalities[newVibe].greeting }]);
   };
 
-  // Function to make J.A.R.V.I.S. talk out loud
+  // Improved Voice Function with Safety Shield
   const speakResponse = (text) => {
-    window.speechSynthesis.cancel(); // Stop any current talking
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.rate = 1.0;
-    utterance.pitch = 0.9;
-
-    window.speechSynthesis.speak(utterance);
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel(); // Stop any current talking
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 0.9;
+      window.speechSynthesis.speak(utterance);
+    } else {
+      console.warn("Voice feature not supported in this browser, bro.");
+    }
   };
 
   const handleSend = async (e) => {
@@ -69,7 +70,7 @@ function App() {
         parts: [{ text: msg.text }],
       }));
 
-      // Sending to your Node.js backend!
+      // Sending to your Node.js backend
       const response = await fetch("http://localhost:5000/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -88,7 +89,7 @@ function App() {
 
       setMessages((prev) => [...prev, { role: "jarvis", text: data.response }]);
 
-      // J.A.R.V.I.S. will speak the response here!
+      // J.A.R.V.I.S. talks out loud!
       speakResponse(data.response);
     } catch (error) {
       console.error("Connection Error:", error);
@@ -119,4 +120,4 @@ function App() {
   );
 }
 
-export default App; // <-- THIS LINE PREVENTS THE CRASH
+export default App;
