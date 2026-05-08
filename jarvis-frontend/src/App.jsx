@@ -8,7 +8,7 @@ const personalities = {
     label: "Protocol: Real Bro",
     instruction:
       "You are the user's best friend, mentor, and guide. Talk to them exactly like a real, close friend would—use words like 'bro', 'man', or 'dude' naturally. Give highly practical, honest, and street-smart advice. Never sound like a robot; be empathetic, supportive, and real. Keep answers concise for voice output.",
-    greeting: "System booted. Just say 'Hey Jarvis' to wake me up, bro.",
+    greeting: "System booted. Just say 'Hey Jarvis' to wake me up, Madhav.",
   },
 };
 
@@ -21,8 +21,11 @@ function App() {
   const [isAwake, setIsAwake] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // 🔥 NAYA STATE: Animation ke liye
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
   const recognitionRef = useRef(null);
-  const isAwakeRef = useRef(false); // Ref for accurate state inside event listeners
+  const isAwakeRef = useRef(false);
   const systemActiveRef = useRef(false);
 
   // Initialize Speech Recognition
@@ -37,13 +40,11 @@ function App() {
     }
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = true; // Keep listening continuously
+    recognition.continuous = true;
     recognition.lang = "en-IN";
     recognition.interimResults = false;
 
-    recognition.onstart = () => {
-      console.log("Listening in background...");
-    };
+    recognition.onstart = () => console.log("Listening in background...");
 
     recognition.onresult = (event) => {
       const current = event.resultIndex;
@@ -52,68 +53,74 @@ function App() {
         .trim();
       console.log("Heard:", transcript);
 
-      // If Jarvis is currently speaking or processing, ignore background noise
-      if (isProcessing) return;
+      if (isProcessing || isSpeaking) return;
 
       if (!isAwakeRef.current) {
-        // Checking for the wake word
         if (transcript.includes("jarvis")) {
           const beep = new Audio(
             "https://www.soundjay.com/buttons/sounds/button-09.mp3",
           );
           beep.play().catch((e) => console.log(e));
 
-          // Split the text to see if user said command along with wake word (e.g. "Hey Jarvis how are you")
           const parts = transcript.split("jarvis");
           const command = parts[1]?.trim();
 
           if (command && command.length > 2) {
-            // Direct command given
             handleSendVoice(command);
           } else {
-            // Only wake word given, wait for next sentence
             isAwakeRef.current = true;
             setIsAwake(true);
           }
         }
       } else {
-        // System is already awake, treat this as the command
         isAwakeRef.current = false;
         setIsAwake(false);
         handleSendVoice(transcript);
       }
     };
 
-    recognition.onerror = (event) => {
+    recognition.onerror = (event) =>
       console.error("Speech Recognition Error:", event.error);
-    };
 
-    // Auto-restart if it stops (Chrome sometimes kills continuous listeners after silence)
     recognition.onend = () => {
-      if (systemActiveRef.current && !isProcessing) {
+      if (systemActiveRef.current && !isProcessing && !isSpeaking) {
         try {
           recognition.start();
-        } catch (e) {
-          // ignore already started errors
-        }
+        } catch (e) {}
       }
     };
 
     recognitionRef.current = recognition;
-  }, [isProcessing, messages]);
+  }, [isProcessing, isSpeaking, messages]);
 
-  // J.A.R.V.I.S Voice Reply
+  // J.A.R.V.I.S Voice Reply (Slow, Deep & Animated)
   const speakResponse = (text) => {
     if ("speechSynthesis" in window) {
-      // Pause listening so it doesn't hear its own voice
       if (recognitionRef.current) recognitionRef.current.abort();
 
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.0;
-      utterance.pitch = 0.9;
+      const voices = window.speechSynthesis.getVoices();
+      const roboticVoice = voices.find(
+        (voice) =>
+          voice.name.includes("Google UK English Male") ||
+          voice.name.includes("Microsoft Mark") ||
+          voice.name.includes("English (United Kingdom)"),
+      );
 
+      if (roboticVoice) utterance.voice = roboticVoice;
+
+      // 🔥 VOICE SETTINGS: Speed kam kar di, pitch deep kar di
+      utterance.pitch = 0.2;
+      utterance.rate = 0.75; // <-- Yahan se aawaz slow aur thehrav wali ho jayegi
+
+      // Jab bolna shuru kare toh animation ON
+      utterance.onstart = () => {
+        setIsSpeaking(true);
+      };
+
+      // Jab bolna band kare toh animation OFF aur wapas sunna chalu
       utterance.onend = () => {
-        // Resume listening after speaking
+        setIsSpeaking(false);
         if (systemActiveRef.current && recognitionRef.current) {
           try {
             recognitionRef.current.start();
@@ -125,14 +132,12 @@ function App() {
     }
   };
 
-  // The Brain: Sending data to Backend
   const handleSendVoice = async (voiceText) => {
     if (!voiceText.trim()) return;
 
     setMessages((prev) => [...prev, { role: "user", text: voiceText }]);
     setIsProcessing(true);
 
-    // Pause listening while processing
     if (recognitionRef.current) recognitionRef.current.abort();
 
     try {
@@ -162,8 +167,6 @@ function App() {
         ...prev,
         { role: "jarvis", text: "System Error. Connection failed." },
       ]);
-
-      // Resume listening on error
       if (systemActiveRef.current && recognitionRef.current) {
         try {
           recognitionRef.current.start();
@@ -174,21 +177,13 @@ function App() {
     }
   };
 
-  // Initial System Boot
   const bootSystem = async () => {
     try {
-      // Just requesting mic permission to be safe
       await navigator.mediaDevices.getUserMedia({ audio: true });
-
       systemActiveRef.current = true;
       setSystemActive(true);
-
-      if (recognitionRef.current) {
-        recognitionRef.current.start();
-      }
-      console.log("System Online. Waiting for 'Hey Jarvis'...");
+      if (recognitionRef.current) recognitionRef.current.start();
     } catch (err) {
-      console.error("Mic access denied!", err);
       alert("Bro, J.A.R.V.I.S. needs mic access to hear you!");
     }
   };
@@ -233,10 +228,9 @@ function App() {
         <>
           <ChatBox messages={messages} isLoading={isProcessing} />
 
-          {/* Status Indicator Area */}
           <div
             style={{
-              padding: "20px",
+              padding: "30px",
               borderTop: "1px solid var(--glass-border)",
               display: "flex",
               justifyContent: "center",
@@ -244,34 +238,61 @@ function App() {
               flexDirection: "column",
             }}
           >
+            {/* 🔥 ASLI ROBOTIC VISUALIZER */}
             <div
               style={{
-                width: "60px",
-                height: "60px",
+                width: isSpeaking ? "80px" : "60px",
+                height: isSpeaking ? "80px" : "60px",
                 borderRadius: "50%",
-                background: isAwake ? "#ff003c" : "var(--neon-blue)",
-                boxShadow: isAwake
-                  ? "0 0 30px #ff003c"
-                  : "0 0 20px var(--neon-blue)",
-                animation: isAwake
-                  ? "pulse-glow 1s infinite"
-                  : "pulse 2s infinite",
-                transition: "all 0.3s ease",
-              }}
-            />
-            <p
-              style={{
-                marginTop: "15px",
-                color: isAwake ? "#ff003c" : "var(--neon-blue)",
-                fontWeight: "bold",
-                letterSpacing: "2px",
+                background: isSpeaking
+                  ? "var(--neon-blue)"
+                  : isAwake
+                    ? "#ff003c"
+                    : "rgba(0, 243, 255, 0.1)",
+                boxShadow: isSpeaking
+                  ? "0 0 50px var(--neon-blue), inset 0 0 20px #fff"
+                  : isAwake
+                    ? "0 0 30px #ff003c"
+                    : "0 0 20px var(--neon-blue)",
+                transition: "all 0.1s ease-in-out", // Super fast transition for speaking effect
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
               }}
             >
-              {isProcessing
-                ? "PROCESSING..."
-                : isAwake
-                  ? "LISTENING TO COMMAND..."
-                  : "SAY 'HEY JARVIS'..."}
+              {/* Inner Core */}
+              <div
+                style={{
+                  width: isSpeaking ? "35px" : "15px",
+                  height: isSpeaking ? "35px" : "15px",
+                  borderRadius: "50%",
+                  background: "#fff",
+                  boxShadow: "0 0 15px #fff",
+                  transition: "all 0.1s ease-in-out",
+                }}
+              />
+            </div>
+
+            <p
+              style={{
+                marginTop: "20px",
+                color: isSpeaking
+                  ? "#fff"
+                  : isAwake
+                    ? "#ff003c"
+                    : "var(--neon-blue)",
+                fontWeight: "bold",
+                letterSpacing: "2px",
+                textShadow: isSpeaking ? "0 0 10px var(--neon-blue)" : "none",
+              }}
+            >
+              {isSpeaking
+                ? "J.A.R.V.I.S. IS SPEAKING..."
+                : isProcessing
+                  ? "PROCESSING..."
+                  : isAwake
+                    ? "LISTENING TO COMMAND..."
+                    : "SAY 'HEY JARVIS'..."}
             </p>
           </div>
         </>
