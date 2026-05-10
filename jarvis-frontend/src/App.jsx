@@ -8,7 +8,7 @@ const personalities = {
     label: "Protocol: Real Bro",
     instruction:
       "You are the user's best friend, mentor, and guide. Talk to them exactly like a real, close friend would—use words like 'bro', 'man', or 'dude' naturally. Give highly practical, honest, and street-smart advice. Never sound like a robot; be empathetic, supportive, and real. Keep answers concise for voice output.",
-    greeting: "System booted. Just say 'Hey Jarvis' to wake me up, Madhav.",
+    greeting: "System booted. Just say my name, 'Jarvis', to wake me up.",
   },
 };
 
@@ -20,8 +20,6 @@ function App() {
   const [systemActive, setSystemActive] = useState(false);
   const [isAwake, setIsAwake] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  // 🔥 NAYA STATE: Animation ke liye
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const recognitionRef = useRef(null);
@@ -41,7 +39,7 @@ function App() {
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
-    recognition.lang = "en-IN";
+    recognition.lang = "en-IN"; // English-India
     recognition.interimResults = false;
 
     recognition.onstart = () => console.log("Listening in background...");
@@ -51,18 +49,26 @@ function App() {
       const transcript = event.results[current][0].transcript
         .toLowerCase()
         .trim();
-      console.log("Heard:", transcript);
+
+      // 🔥 DEBUGGING TRICK: F12 (Console) mein dekh browser kya sun raha hai!
+      console.log("Browser heard:", transcript);
 
       if (isProcessing || isSpeaking) return;
 
       if (!isAwakeRef.current) {
-        if (transcript.includes("jarvis")) {
+        // 🔥 SUPER EASY WAKE WORD: Bas "jarvis" match hona chahiye
+        if (
+          transcript.includes("jarvis") ||
+          transcript.includes("service") ||
+          transcript.includes("charvis")
+        ) {
           const beep = new Audio(
             "https://www.soundjay.com/buttons/sounds/button-09.mp3",
           );
           beep.play().catch((e) => console.log(e));
 
-          const parts = transcript.split("jarvis");
+          // Extract command if spoken in the same breath
+          const parts = transcript.split(/jarvis|service|charvis/);
           const command = parts[1]?.trim();
 
           if (command && command.length > 2) {
@@ -73,14 +79,27 @@ function App() {
           }
         }
       } else {
+        // System is awake, taking the command
         isAwakeRef.current = false;
         setIsAwake(false);
         handleSendVoice(transcript);
       }
     };
 
-    recognition.onerror = (event) =>
+    // Auto-restart logic if browser puts mic to sleep
+    recognition.onerror = (event) => {
       console.error("Speech Recognition Error:", event.error);
+      if (
+        event.error === "no-speech" &&
+        systemActiveRef.current &&
+        !isProcessing &&
+        !isSpeaking
+      ) {
+        try {
+          recognition.stop();
+        } catch (e) {}
+      }
+    };
 
     recognition.onend = () => {
       if (systemActiveRef.current && !isProcessing && !isSpeaking) {
@@ -109,16 +128,11 @@ function App() {
 
       if (roboticVoice) utterance.voice = roboticVoice;
 
-      // 🔥 VOICE SETTINGS: Speed kam kar di, pitch deep kar di
       utterance.pitch = 0.2;
-      utterance.rate = 0.75; // <-- Yahan se aawaz slow aur thehrav wali ho jayegi
+      utterance.rate = 0.75;
 
-      // Jab bolna shuru kare toh animation ON
-      utterance.onstart = () => {
-        setIsSpeaking(true);
-      };
+      utterance.onstart = () => setIsSpeaking(true);
 
-      // Jab bolna band kare toh animation OFF aur wapas sunna chalu
       utterance.onend = () => {
         setIsSpeaking(false);
         if (systemActiveRef.current && recognitionRef.current) {
@@ -238,7 +252,6 @@ function App() {
               flexDirection: "column",
             }}
           >
-            {/* 🔥 ASLI ROBOTIC VISUALIZER */}
             <div
               style={{
                 width: isSpeaking ? "80px" : "60px",
@@ -254,13 +267,12 @@ function App() {
                   : isAwake
                     ? "0 0 30px #ff003c"
                     : "0 0 20px var(--neon-blue)",
-                transition: "all 0.1s ease-in-out", // Super fast transition for speaking effect
+                transition: "all 0.1s ease-in-out",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
               }}
             >
-              {/* Inner Core */}
               <div
                 style={{
                   width: isSpeaking ? "35px" : "15px",
@@ -292,7 +304,7 @@ function App() {
                   ? "PROCESSING..."
                   : isAwake
                     ? "LISTENING TO COMMAND..."
-                    : "SAY 'HEY JARVIS'..."}
+                    : "SAY 'JARVIS'..."}
             </p>
           </div>
         </>
