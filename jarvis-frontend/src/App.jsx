@@ -1,20 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-import Header from "./components/Header";
-import ChatBox from "./components/ChatBox";
 import "./index.css";
 
 const personalities = {
   buddy: {
     label: "Protocol: Real Bro",
     instruction:
-      "You are the user's best friend, mentor, and guide. The user's name is Madhav Kalra. Talk to Madhav exactly like a real, close friend would. Give highly practical, honest, and street-smart advice. You can mix Hindi and English (Hinglish) naturally. Never sound like a robot; be empathetic, supportive, and real. Keep answers concise for voice output.",
-    greeting:
-      "System booted. Just say my name, 'Jarvis', to wake me up, Madhav.",
+      "You are the user's best friend, mentor, and guide. The user's name is Madhav. Talk exactly like a real, close friend would. Give highly practical, honest, and street-smart advice. You can mix Hindi and English (Hinglish) naturally. Never sound like a robot; be empathetic, supportive, and real. Keep answers concise for voice output.",
+    greeting: "System booted. Just say my name, 'Jarvis', to wake me up.",
   },
 };
 
 function App() {
-  const [activePersonality] = useState("buddy");
+  const [activePersonality, setActivePersonality] = useState("buddy");
   const [messages, setMessages] = useState([
     { role: "jarvis", text: personalities["buddy"].greeting },
   ]);
@@ -26,6 +23,12 @@ function App() {
   const recognitionRef = useRef(null);
   const isAwakeRef = useRef(false);
   const systemActiveRef = useRef(false);
+  const chatEndRef = useRef(null); // Auto-scroll ref
+
+  // Auto-scroll to bottom of chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   useEffect(() => {
     const SpeechRecognition =
@@ -123,10 +126,7 @@ function App() {
             voice.name.includes("Ravi"),
         ) || voices.find((voice) => voice.lang.includes("en-IN"));
 
-      if (bestVoice) {
-        utterance.voice = bestVoice;
-      }
-
+      if (bestVoice) utterance.voice = bestVoice;
       utterance.pitch = 1.0;
       utterance.rate = 0.95;
 
@@ -202,7 +202,6 @@ function App() {
     }
   };
 
-  // Determine current HUD mode for animations
   const getHudModeClass = () => {
     if (isSpeaking) return "mode-speaking";
     if (isAwake || isProcessing) return "mode-awake";
@@ -224,11 +223,20 @@ function App() {
 
   return (
     <div className="jarvis-container">
-      <Header
-        activePersonality={activePersonality}
-        personalities={personalities}
-        onSwitch={() => {}}
-      />
+      {/* 🚀 FIXED HEADER ALIGNMENT */}
+      <div className="custom-header">
+        <h1>● J.A.R.V.I.S. INTERFACE</h1>
+        <select
+          value={activePersonality}
+          onChange={(e) => setActivePersonality(e.target.value)}
+        >
+          {Object.keys(personalities).map((key) => (
+            <option key={key} value={key}>
+              {personalities[key].label}
+            </option>
+          ))}
+        </select>
+      </div>
 
       {!systemActive ? (
         <div className="offline-screen">
@@ -239,8 +247,17 @@ function App() {
         </div>
       ) : (
         <>
-          <ChatBox messages={messages} isLoading={isProcessing} />
+          {/* 🚀 CHAT BOX DISPLAY */}
+          <div className="chat-area">
+            {messages.map((msg, index) => (
+              <div key={index} className={`chat-message ${msg.role}`}>
+                {msg.text}
+              </div>
+            ))}
+            <div ref={chatEndRef} />
+          </div>
 
+          {/* 🚀 HUD ANIMATION AREA */}
           <div className="hud-container">
             <div className={`visualizer-orb ${getHudModeClass()}`}>
               <div className="orb-core" />
