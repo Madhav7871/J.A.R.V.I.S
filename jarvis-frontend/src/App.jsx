@@ -7,8 +7,9 @@ const personalities = {
   buddy: {
     label: "Protocol: Real Bro",
     instruction:
-      "You are the user's best friend, mentor, and guide. Talk to them exactly like a real, close friend would—use words like 'bro', 'man', or 'dude' naturally. Give highly practical, honest, and street-smart advice. Never sound like a robot; be empathetic, supportive, and real. Keep answers concise for voice output.",
-    greeting: "System booted. Just say my name, 'Jarvis', to wake me up.",
+      "You are the user's best friend, mentor, and guide. The user's name is Madhav Kalra. Talk to Madhav exactly like a real, close friend would. Give highly practical, honest, and street-smart advice. You can mix Hindi and English (Hinglish) naturally. Never sound like a robot; be empathetic, supportive, and real. Keep answers concise for voice output.",
+    greeting:
+      "System booted. Just say my name, 'Jarvis', to wake me up, Madhav.",
   },
 };
 
@@ -26,7 +27,6 @@ function App() {
   const isAwakeRef = useRef(false);
   const systemActiveRef = useRef(false);
 
-  // Initialize Speech Recognition
   useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -39,7 +39,7 @@ function App() {
 
     const recognition = new SpeechRecognition();
     recognition.continuous = true;
-    recognition.lang = "en-IN"; // English-India
+    recognition.lang = "en-IN";
     recognition.interimResults = false;
 
     recognition.onstart = () => console.log("Listening in background...");
@@ -50,13 +50,11 @@ function App() {
         .toLowerCase()
         .trim();
 
-      // 🔥 DEBUGGING TRICK: F12 (Console) mein dekh browser kya sun raha hai!
       console.log("Browser heard:", transcript);
 
       if (isProcessing || isSpeaking) return;
 
       if (!isAwakeRef.current) {
-        // 🔥 SUPER EASY WAKE WORD: Bas "jarvis" match hona chahiye
         if (
           transcript.includes("jarvis") ||
           transcript.includes("service") ||
@@ -67,7 +65,6 @@ function App() {
           );
           beep.play().catch((e) => console.log(e));
 
-          // Extract command if spoken in the same breath
           const parts = transcript.split(/jarvis|service|charvis/);
           const command = parts[1]?.trim();
 
@@ -79,16 +76,13 @@ function App() {
           }
         }
       } else {
-        // System is awake, taking the command
         isAwakeRef.current = false;
         setIsAwake(false);
         handleSendVoice(transcript);
       }
     };
 
-    // Auto-restart logic if browser puts mic to sleep
     recognition.onerror = (event) => {
-      console.error("Speech Recognition Error:", event.error);
       if (
         event.error === "no-speech" &&
         systemActiveRef.current &&
@@ -112,24 +106,29 @@ function App() {
     recognitionRef.current = recognition;
   }, [isProcessing, isSpeaking, messages]);
 
-  // J.A.R.V.I.S Voice Reply (Slow, Deep & Animated)
   const speakResponse = (text) => {
     if ("speechSynthesis" in window) {
       if (recognitionRef.current) recognitionRef.current.abort();
 
       const utterance = new SpeechSynthesisUtterance(text);
       const voices = window.speechSynthesis.getVoices();
-      const roboticVoice = voices.find(
-        (voice) =>
-          voice.name.includes("Google UK English Male") ||
-          voice.name.includes("Microsoft Mark") ||
-          voice.name.includes("English (United Kingdom)"),
-      );
 
-      if (roboticVoice) utterance.voice = roboticVoice;
+      const bestVoice =
+        voices.find(
+          (voice) =>
+            voice.name.includes("Google हिन्दी") ||
+            voice.lang === "hi-IN" ||
+            voice.name.includes("India") ||
+            voice.name.includes("Hemant") ||
+            voice.name.includes("Ravi"),
+        ) || voices.find((voice) => voice.lang.includes("en-IN"));
 
-      utterance.pitch = 0.2;
-      utterance.rate = 0.75;
+      if (bestVoice) {
+        utterance.voice = bestVoice;
+      }
+
+      utterance.pitch = 1.0;
+      utterance.rate = 0.95;
 
       utterance.onstart = () => setIsSpeaking(true);
 
@@ -197,13 +196,34 @@ function App() {
       systemActiveRef.current = true;
       setSystemActive(true);
       if (recognitionRef.current) recognitionRef.current.start();
+      window.speechSynthesis.getVoices();
     } catch (err) {
       alert("Bro, J.A.R.V.I.S. needs mic access to hear you!");
     }
   };
 
+  // Determine current HUD mode for animations
+  const getHudModeClass = () => {
+    if (isSpeaking) return "mode-speaking";
+    if (isAwake || isProcessing) return "mode-awake";
+    return "mode-sleep";
+  };
+
+  const getStatusText = () => {
+    if (isSpeaking) return "J.A.R.V.I.S. IS SPEAKING...";
+    if (isProcessing) return "PROCESSING...";
+    if (isAwake) return "LISTENING TO COMMAND...";
+    return "SAY 'JARVIS'...";
+  };
+
+  const getStatusColorClass = () => {
+    if (isSpeaking) return "text-white";
+    if (isAwake || isProcessing) return "text-red";
+    return "text-blue";
+  };
+
   return (
-    <div className="jarvis-container" style={{ position: "relative" }}>
+    <div className="jarvis-container">
       <Header
         activePersonality={activePersonality}
         personalities={personalities}
@@ -211,30 +231,9 @@ function App() {
       />
 
       {!systemActive ? (
-        <div
-          style={{
-            display: "flex",
-            height: "100%",
-            justifyContent: "center",
-            alignItems: "center",
-            flexDirection: "column",
-            gap: "20px",
-          }}
-        >
-          <h2 style={{ color: "var(--neon-blue)" }}>SYSTEM OFFLINE</h2>
-          <button
-            onClick={bootSystem}
-            style={{
-              padding: "15px 30px",
-              fontSize: "1.2rem",
-              background: "var(--neon-blue)",
-              color: "#000",
-              border: "none",
-              borderRadius: "5px",
-              cursor: "pointer",
-              fontWeight: "bold",
-            }}
-          >
+        <div className="offline-screen">
+          <h2>SYSTEM OFFLINE</h2>
+          <button className="boot-btn" onClick={bootSystem}>
             BOOT J.A.R.V.I.S.
           </button>
         </div>
@@ -242,69 +241,13 @@ function App() {
         <>
           <ChatBox messages={messages} isLoading={isProcessing} />
 
-          <div
-            style={{
-              padding: "30px",
-              borderTop: "1px solid var(--glass-border)",
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              flexDirection: "column",
-            }}
-          >
-            <div
-              style={{
-                width: isSpeaking ? "80px" : "60px",
-                height: isSpeaking ? "80px" : "60px",
-                borderRadius: "50%",
-                background: isSpeaking
-                  ? "var(--neon-blue)"
-                  : isAwake
-                    ? "#ff003c"
-                    : "rgba(0, 243, 255, 0.1)",
-                boxShadow: isSpeaking
-                  ? "0 0 50px var(--neon-blue), inset 0 0 20px #fff"
-                  : isAwake
-                    ? "0 0 30px #ff003c"
-                    : "0 0 20px var(--neon-blue)",
-                transition: "all 0.1s ease-in-out",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <div
-                style={{
-                  width: isSpeaking ? "35px" : "15px",
-                  height: isSpeaking ? "35px" : "15px",
-                  borderRadius: "50%",
-                  background: "#fff",
-                  boxShadow: "0 0 15px #fff",
-                  transition: "all 0.1s ease-in-out",
-                }}
-              />
+          <div className="hud-container">
+            <div className={`visualizer-orb ${getHudModeClass()}`}>
+              <div className="orb-core" />
             </div>
 
-            <p
-              style={{
-                marginTop: "20px",
-                color: isSpeaking
-                  ? "#fff"
-                  : isAwake
-                    ? "#ff003c"
-                    : "var(--neon-blue)",
-                fontWeight: "bold",
-                letterSpacing: "2px",
-                textShadow: isSpeaking ? "0 0 10px var(--neon-blue)" : "none",
-              }}
-            >
-              {isSpeaking
-                ? "J.A.R.V.I.S. IS SPEAKING..."
-                : isProcessing
-                  ? "PROCESSING..."
-                  : isAwake
-                    ? "LISTENING TO COMMAND..."
-                    : "SAY 'JARVIS'..."}
+            <p className={`status-text ${getStatusColorClass()}`}>
+              {getStatusText()}
             </p>
           </div>
         </>
