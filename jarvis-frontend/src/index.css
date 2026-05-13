@@ -24,17 +24,17 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  /* 🔥 Sci-Fi Deep Space Background */
+  /* Deep Space Background */
   background: url("https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?q=80&w=2000&auto=format&fit=crop")
     no-repeat center center fixed;
   background-size: cover;
 }
 
-/* 🔥 The Fix: Wide and Tall Container */
+/* Wide Container */
 .jarvis-container {
-  width: 85vw; /* Made it wide! */
+  width: 85vw;
   max-width: 1200px;
-  height: 85vh; /* Made it tall! */
+  height: 85vh;
   background: var(--glass-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -48,7 +48,7 @@ body {
   overflow: hidden;
 }
 
-/* 🔥 The Fix: Perfectly Aligned Header */
+/* Header */
 .custom-header {
   display: flex;
   justify-content: space-between;
@@ -247,6 +247,29 @@ body {
 .text-white {
   color: #fff;
   text-shadow: 0 0 15px var(--neon-blue);
+}
+
+/* Pause Button Styling */
+.pause-btn {
+  margin-top: 20px;
+  padding: 10px 25px;
+  background: rgba(255, 0, 60, 0.1);
+  border: 1px solid var(--neon-red);
+  color: var(--neon-red);
+  border-radius: 8px;
+  font-family: "JetBrains Mono", monospace;
+  font-weight: bold;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(255, 0, 60, 0.2);
+}
+
+.pause-btn:hover {
+  background: var(--neon-red);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(255, 0, 60, 0.6);
+  transform: translateY(-2px);
 }
 
 @keyframes pulse-blue {

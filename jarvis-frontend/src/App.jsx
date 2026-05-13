@@ -6,7 +6,8 @@ const personalities = {
     label: "Protocol: Real Bro",
     instruction:
       "You are the user's best friend, mentor, and guide. The user's name is Madhav. Talk exactly like a real, close friend would. Give highly practical, honest, and street-smart advice. You can mix Hindi and English (Hinglish) naturally. Never sound like a robot; be empathetic, supportive, and real. Keep answers concise for voice output.",
-    greeting: "System booted. Just say my name, 'Jarvis', to wake me up.",
+    greeting:
+      "System booted. Say 'Jarvis' once to start the continuous conversation.",
   },
 };
 
@@ -16,20 +17,52 @@ function App() {
     { role: "jarvis", text: personalities["buddy"].greeting },
   ]);
   const [systemActive, setSystemActive] = useState(false);
-  const [isAwake, setIsAwake] = useState(false);
+
+  const [isConversationMode, setIsConversationMode] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const recognitionRef = useRef(null);
-  const isAwakeRef = useRef(false);
+  const isConversationModeRef = useRef(false);
   const systemActiveRef = useRef(false);
-  const chatEndRef = useRef(null); // Auto-scroll ref
+  const chatEndRef = useRef(null);
 
-  // Auto-scroll to bottom of chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // KILL SWITCH / PAUSE LOGIC
+  const pauseConversation = () => {
+    console.log("Session Paused / Interrupted!");
+    isConversationModeRef.current = false;
+    setIsConversationMode(false);
+    setIsProcessing(false);
+
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.abort();
+      } catch (e) {}
+    }
+  };
+
+  // SPACEBAR SHORTCUT TO PAUSE
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.code === "Space" && systemActiveRef.current) {
+        e.preventDefault();
+        pauseConversation();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // SPEECH RECOGNITION SETUP
   useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -45,7 +78,7 @@ function App() {
     recognition.lang = "en-IN";
     recognition.interimResults = false;
 
-    recognition.onstart = () => console.log("Listening in background...");
+    recognition.onstart = () => console.log("Mic Active...");
 
     recognition.onresult = (event) => {
       const current = event.resultIndex;
@@ -57,7 +90,8 @@ function App() {
 
       if (isProcessing || isSpeaking) return;
 
-      if (!isAwakeRef.current) {
+      if (!isConversationModeRef.current) {
+        // WAKE WORD DETECTION
         if (
           transcript.includes("jarvis") ||
           transcript.includes("service") ||
@@ -68,20 +102,21 @@ function App() {
           );
           beep.play().catch((e) => console.log(e));
 
+          isConversationModeRef.current = true;
+          setIsConversationMode(true);
+
           const parts = transcript.split(/jarvis|service|charvis/);
           const command = parts[1]?.trim();
 
           if (command && command.length > 2) {
             handleSendVoice(command);
-          } else {
-            isAwakeRef.current = true;
-            setIsAwake(true);
           }
         }
       } else {
-        isAwakeRef.current = false;
-        setIsAwake(false);
-        handleSendVoice(transcript);
+        // CONTINUOUS LISTENING
+        if (transcript.length > 2) {
+          handleSendVoice(transcript);
+        }
       }
     };
 
@@ -134,10 +169,13 @@ function App() {
 
       utterance.onend = () => {
         setIsSpeaking(false);
-        if (systemActiveRef.current && recognitionRef.current) {
-          try {
-            recognitionRef.current.start();
-          } catch (e) {}
+        // Resume listening automatically after speaking
+        if (systemActiveRef.current && isConversationModeRef.current) {
+          if (recognitionRef.current) {
+            try {
+              recognitionRef.current.start();
+            } catch (e) {}
+          }
         }
       };
 
@@ -180,13 +218,13 @@ function App() {
         ...prev,
         { role: "jarvis", text: "System Error. Connection failed." },
       ]);
+      setIsProcessing(false);
+
       if (systemActiveRef.current && recognitionRef.current) {
         try {
           recognitionRef.current.start();
         } catch (e) {}
       }
-    } finally {
-      setIsProcessing(false);
     }
   };
 
@@ -204,26 +242,25 @@ function App() {
 
   const getHudModeClass = () => {
     if (isSpeaking) return "mode-speaking";
-    if (isAwake || isProcessing) return "mode-awake";
+    if (isConversationMode || isProcessing) return "mode-awake";
     return "mode-sleep";
   };
 
   const getStatusText = () => {
     if (isSpeaking) return "J.A.R.V.I.S. IS SPEAKING...";
     if (isProcessing) return "PROCESSING...";
-    if (isAwake) return "LISTENING TO COMMAND...";
-    return "SAY 'JARVIS'...";
+    if (isConversationMode) return "CONVERSATION ACTIVE...";
+    return "SAY 'JARVIS' TO START...";
   };
 
   const getStatusColorClass = () => {
     if (isSpeaking) return "text-white";
-    if (isAwake || isProcessing) return "text-red";
+    if (isConversationMode || isProcessing) return "text-red";
     return "text-blue";
   };
 
   return (
     <div className="jarvis-container">
-      {/* 🚀 FIXED HEADER ALIGNMENT */}
       <div className="custom-header">
         <h1>● J.A.R.V.I.S. INTERFACE</h1>
         <select
@@ -247,7 +284,6 @@ function App() {
         </div>
       ) : (
         <>
-          {/* 🚀 CHAT BOX DISPLAY */}
           <div className="chat-area">
             {messages.map((msg, index) => (
               <div key={index} className={`chat-message ${msg.role}`}>
@@ -257,7 +293,6 @@ function App() {
             <div ref={chatEndRef} />
           </div>
 
-          {/* 🚀 HUD ANIMATION AREA */}
           <div className="hud-container">
             <div className={`visualizer-orb ${getHudModeClass()}`}>
               <div className="orb-core" />
@@ -266,6 +301,12 @@ function App() {
             <p className={`status-text ${getStatusColorClass()}`}>
               {getStatusText()}
             </p>
+
+            {isConversationMode && (
+              <button className="pause-btn" onClick={pauseConversation}>
+                ⏸ PAUSE JARVIS (OR PRESS SPACE)
+              </button>
+            )}
           </div>
         </>
       )}
