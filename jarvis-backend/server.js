@@ -9,10 +9,9 @@ app.use(express.json());
 const PORT = process.env.PORT || 5000;
 const apiKey = process.env.GEMINI_API_KEY;
 
-let workingModel = "models/gemini-1.5-flash"; // Default
+// 🔥 FORCE STABLE MODEL: Hum deliberately 1.5-flash use karenge kyunki wo free tier pe zyada stable hai
+let workingModel = "models/gemini-1.5-flash";
 
-// 🧠 HACK: Server start hote hi model detect karke save kar lenge
-// Taaki har message par double API call na ho aur Rate Limit hit na kare!
 async function initializeMainframe() {
   if (!apiKey) {
     console.log("🚨 ALARM: API KEY IS MISSING!");
@@ -26,13 +25,23 @@ async function initializeMainframe() {
     const listData = await listResponse.json();
 
     if (listData.models && listData.models.length > 0) {
-      const availableModels = listData.models.filter(
-        (m) =>
-          m.name.includes("gemini") &&
-          m.supportedGenerationMethods.includes("generateContent"),
+      // Priority: Check if 1.5-flash is explicitly available to avoid 2.5 overload
+      const hasStableModel = listData.models.some(
+        (m) => m.name === "models/gemini-1.5-flash",
       );
-      if (availableModels.length > 0) {
-        workingModel = availableModels[0].name;
+
+      if (hasStableModel) {
+        workingModel = "models/gemini-1.5-flash";
+      } else {
+        // Fallback to whatever is available if 1.5 is missing
+        const availableModels = listData.models.filter(
+          (m) =>
+            m.name.includes("gemini") &&
+            m.supportedGenerationMethods.includes("generateContent"),
+        );
+        if (availableModels.length > 0) {
+          workingModel = availableModels[0].name;
+        }
       }
     }
     console.log(`✅ SUCCESS: Mainframe locked onto ${workingModel}`);
@@ -78,6 +87,15 @@ app.post("/api/chat", async (req, res) => {
     const data = await response.json();
 
     if (!response.ok) {
+      // Catch specific overload errors
+      if (
+        data.error?.code === 503 ||
+        data.error?.message?.includes("high demand")
+      ) {
+        throw new Error(
+          "Server Overloaded! Google is too busy. Wait 10 seconds.",
+        );
+      }
       throw new Error(data.error?.message || "Google API request failed");
     }
 

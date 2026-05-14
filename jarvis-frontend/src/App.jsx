@@ -144,53 +144,43 @@ function App() {
     recognitionRef.current = recognition;
   }, [isProcessing, isSpeaking, messages]);
 
-  // 🔥 THE UPGRADED PREMIUM VOICE LOGIC
+  // 🔥 STRICT MALE VOICE LOGIC
   const speakResponse = (text) => {
     if ("speechSynthesis" in window) {
       if (recognitionRef.current) recognitionRef.current.abort();
 
       const utterance = new SpeechSynthesisUtterance(text);
-
-      // Get all available voices
       let voices = window.speechSynthesis.getVoices();
 
-      // Sometimes voices take a millisecond to load, this is a fallback
       if (voices.length === 0) {
         voices = window.speechSynthesis.getVoices();
       }
 
-      // 1. First priority: High-quality Online/Natural Indian voices (Like Edge Natural Voices)
+      // 1. Strictly hunt for MALE voices (Indian priority, then UK, then any Male)
       let bestVoice = voices.find(
         (v) =>
-          (v.name.includes("Natural") || v.name.includes("Online")) &&
-          (v.lang.includes("hi-IN") || v.lang.includes("en-IN")),
+          v.name.includes("Hemant") ||
+          v.name.includes("Ravi") ||
+          v.name.includes("Google UK English Male") ||
+          v.name.toLowerCase().includes("male") ||
+          v.name.includes("David"),
       );
 
-      // 2. Second priority: Standard Google Hindi voice (Very clear on Chrome)
+      // 2. Fallback if no explicit male voice is found (Rare, but safe to have)
       if (!bestVoice) {
         bestVoice = voices.find(
-          (v) => v.name.includes("Google हिन्दी") || v.name === "Google Hindi",
-        );
-      }
-
-      // 3. Fallback: Any generic Indian voice available
-      if (!bestVoice) {
-        bestVoice = voices.find(
-          (v) =>
-            v.lang === "hi-IN" ||
-            v.lang === "en-IN" ||
-            v.name.includes("India"),
+          (v) => v.lang.includes("en-IN") || v.lang.includes("hi-IN"),
         );
       }
 
       if (bestVoice) {
         utterance.voice = bestVoice;
-        console.log("🔊 Playing with Premium Voice:", bestVoice.name); // Check F12 Console to see which voice it picked!
+        console.log("🔊 Playing with MALE Voice:", bestVoice.name); // F12 console me check kar liyo bhai!
       }
 
-      // Voice settings for Smoothness
-      utterance.pitch = 1.0;
-      utterance.rate = 0.9; // 🔥 Slowed down just a tiny bit so Hindi words don't clip and sound buttery smooth
+      // Pitch thodi low ki hai taaki aawaz bhari (deep male) aaye
+      utterance.pitch = 0.9;
+      utterance.rate = 0.95;
 
       utterance.onstart = () => setIsSpeaking(true);
 
@@ -262,7 +252,7 @@ function App() {
       setSystemActive(true);
       if (recognitionRef.current) recognitionRef.current.start();
 
-      // Force voices to load on boot
+      // Force voices to load properly
       window.speechSynthesis.getVoices();
     } catch (err) {
       alert("Bro, J.A.R.V.I.S. needs mic access to hear you!");
