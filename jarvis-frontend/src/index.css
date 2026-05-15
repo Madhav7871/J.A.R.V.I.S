@@ -4,8 +4,8 @@
   --neon-blue: #00f3ff;
   --neon-blue-glow: rgba(0, 243, 255, 0.4);
   --neon-red: #ff003c;
-  --glass-bg: rgba(10, 15, 30, 0.65);
-  --glass-border: rgba(0, 243, 255, 0.2);
+  --glass-bg: rgba(6, 10, 20, 0.75);
+  --glass-border: rgba(0, 243, 255, 0.3);
   --text-main: #f8fafc;
 }
 
@@ -24,28 +24,57 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  /* Deep Space Background */
   background: url("https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?q=80&w=2000&auto=format&fit=crop")
     no-repeat center center fixed;
   background-size: cover;
 }
 
-/* Wide Container */
+/* 🚀 HUD Container with Scanline Effect */
 .jarvis-container {
   width: 85vw;
   max-width: 1200px;
   height: 85vh;
   background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--glass-border);
-  border-radius: 20px;
+  border-radius: 16px;
   box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.7),
-    inset 0 0 20px rgba(0, 243, 255, 0.05);
+    0 0 40px rgba(0, 0, 0, 0.8),
+    inset 0 0 30px rgba(0, 243, 255, 0.05);
   display: flex;
   flex-direction: column;
+  position: relative;
   overflow: hidden;
+}
+
+/* Holographic Scanline Overlay */
+.jarvis-container::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(0, 243, 255, 0),
+    rgba(0, 243, 255, 0.05) 50%,
+    rgba(0, 243, 255, 0)
+  );
+  background-size: 100% 8px;
+  pointer-events: none;
+  animation: scanline 6s linear infinite;
+  z-index: 10;
+}
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
 }
 
 /* Header */
@@ -54,8 +83,10 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 20px 30px;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.6);
   border-bottom: 1px solid var(--glass-border);
+  position: relative;
+  z-index: 20;
 }
 
 .custom-header h1 {
@@ -63,17 +94,17 @@ body {
   color: var(--neon-blue);
   font-family: "JetBrains Mono", monospace;
   font-size: 1.5rem;
-  letter-spacing: 2px;
+  letter-spacing: 3px;
   text-transform: uppercase;
-  text-shadow: 0 0 10px var(--neon-blue-glow);
+  text-shadow: 0 0 15px var(--neon-blue-glow);
 }
 
 .custom-header select {
   background: rgba(0, 0, 0, 0.6);
   color: var(--neon-blue);
   border: 1px solid var(--neon-blue);
-  padding: 10px 15px;
-  border-radius: 8px;
+  padding: 8px 15px;
+  border-radius: 4px;
   font-family: "JetBrains Mono", monospace;
   font-weight: bold;
   outline: none;
@@ -81,12 +112,7 @@ body {
   box-shadow: 0 0 10px rgba(0, 243, 255, 0.1) inset;
 }
 
-.custom-header select option {
-  background: #000;
-  color: #fff;
-}
-
-/* Offline Screen */
+/* Offline & Boot Screen */
 .offline-screen {
   display: flex;
   flex: 1;
@@ -94,14 +120,16 @@ body {
   justify-content: center;
   align-items: center;
   gap: 30px;
+  position: relative;
+  z-index: 20;
 }
 
 .offline-screen h2 {
   color: var(--neon-blue);
-  letter-spacing: 4px;
+  letter-spacing: 5px;
   font-family: "JetBrains Mono", monospace;
   font-size: 2.5rem;
-  text-shadow: 0 0 15px var(--neon-blue-glow);
+  text-shadow: 0 0 20px var(--neon-blue-glow);
   margin: 0;
 }
 
@@ -111,24 +139,43 @@ body {
   background: rgba(0, 243, 255, 0.05);
   color: var(--neon-blue);
   border: 2px solid var(--neon-blue);
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
   font-weight: bold;
   font-family: "JetBrains Mono", monospace;
-  text-transform: uppercase;
   letter-spacing: 3px;
   transition: all 0.3s ease;
   box-shadow: 0 0 15px rgba(0, 243, 255, 0.2) inset;
+  position: relative;
+  overflow: hidden;
 }
 
+.boot-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 243, 255, 0.4),
+    transparent
+  );
+  transition: all 0.5s ease;
+}
+
+.boot-btn:hover::before {
+  left: 100%;
+}
 .boot-btn:hover {
   background: var(--neon-blue);
   color: #000;
-  box-shadow: 0 0 30px var(--neon-blue-glow);
-  transform: translateY(-2px);
+  box-shadow: 0 0 40px var(--neon-blue-glow);
 }
 
-/* Chat Box Area */
+/* Chat Area */
 .chat-area {
   flex: 1;
   overflow-y: auto;
@@ -136,12 +183,14 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
+  position: relative;
+  z-index: 20;
 }
 
 .chat-message {
   max-width: 80%;
   padding: 15px 20px;
-  border-radius: 12px;
+  border-radius: 8px;
   line-height: 1.5;
   font-size: 1.05rem;
 }
@@ -149,170 +198,181 @@ body {
 .chat-message.user {
   align-self: flex-end;
   background: rgba(0, 243, 255, 0.1);
-  border: 1px solid rgba(0, 243, 255, 0.2);
+  border-left: 3px solid var(--neon-blue);
   border-bottom-right-radius: 0;
 }
 
 .chat-message.jarvis {
   align-self: flex-start;
   background: rgba(0, 0, 0, 0.5);
-  border: 1px solid var(--glass-border);
-  color: var(--neon-blue);
+  border-right: 3px solid var(--neon-blue);
+  color: #fff;
   font-family: "JetBrains Mono", monospace;
   border-bottom-left-radius: 0;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
-/* HUD / Visualizer Area */
+/* 🚀 ARC REACTOR VISUALIZER */
 .hud-container {
   padding: 30px;
   border-top: 1px solid var(--glass-border);
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
   flex-direction: column;
+  position: relative;
+  z-index: 20;
 }
 
-.visualizer-orb {
-  border-radius: 50%;
+.arc-reactor {
+  position: relative;
+  width: 100px;
+  height: 100px;
   display: flex;
   justify-content: center;
   align-items: center;
-  transition: all 0.2s ease-in-out;
 }
 
-.orb-core {
+.arc-ring-1,
+.arc-ring-2 {
+  position: absolute;
   border-radius: 50%;
-  background: #fff;
-  transition: all 0.2s ease-in-out;
+  border: 2px dashed var(--neon-blue);
+  transition: all 0.3s ease;
+}
+
+.arc-ring-1 {
+  width: 100%;
+  height: 100%;
+  animation: spinRight 10s linear infinite;
+  opacity: 0.5;
+}
+.arc-ring-2 {
+  width: 75%;
+  height: 75%;
+  border-style: dotted;
+  animation: spinLeft 8s linear infinite;
+  opacity: 0.8;
+}
+.orb-core {
+  width: 30px;
+  height: 30px;
+  background: var(--neon-blue);
+  border-radius: 50%;
+  box-shadow: 0 0 20px var(--neon-blue);
+  transition: all 0.2s ease;
+}
+
+@keyframes spinRight {
+  100% {
+    transform: rotate(360deg);
+  }
+}
+@keyframes spinLeft {
+  100% {
+    transform: rotate(-360deg);
+  }
 }
 
 /* Orb Status Modes */
-.mode-sleep .visualizer-orb {
-  width: 60px;
-  height: 60px;
-  background: rgba(0, 243, 255, 0.1);
-  box-shadow: 0 0 20px var(--neon-blue);
-  animation: pulse-blue 2s infinite;
+.mode-sleep .arc-ring-1 {
+  border-color: rgba(0, 243, 255, 0.2);
+}
+.mode-sleep .arc-ring-2 {
+  border-color: rgba(0, 243, 255, 0.4);
 }
 .mode-sleep .orb-core {
-  width: 15px;
-  height: 15px;
-  box-shadow: 0 0 10px #fff;
+  background: rgba(0, 243, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+  animation: breathe 3s infinite;
 }
 
-.mode-awake .visualizer-orb {
-  width: 75px;
-  height: 75px;
-  background: var(--neon-red);
-  box-shadow: 0 0 30px var(--neon-red);
-  animation: pulse-red 1s infinite;
+.mode-awake .arc-ring-1,
+.mode-awake .arc-ring-2 {
+  border-color: var(--neon-red);
+  animation-duration: 4s;
 }
 .mode-awake .orb-core {
-  width: 25px;
-  height: 25px;
-  box-shadow: 0 0 15px #fff;
-}
-
-.mode-speaking .visualizer-orb {
-  width: 95px;
-  height: 95px;
-  background: var(--neon-blue);
-  box-shadow:
-    0 0 50px var(--neon-blue),
-    inset 0 0 20px #fff;
-}
-.mode-speaking .orb-core {
+  background: var(--neon-red);
+  box-shadow: 0 0 40px var(--neon-red);
   width: 40px;
   height: 40px;
-  box-shadow: 0 0 20px #fff;
 }
 
+.mode-speaking .arc-ring-1,
+.mode-speaking .arc-ring-2 {
+  border-color: var(--neon-blue);
+  border-width: 4px;
+  animation-duration: 2s;
+}
+.mode-speaking .orb-core {
+  background: #fff;
+  box-shadow: 0 0 60px var(--neon-blue);
+  width: 50px;
+  height: 50px;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+/* Status Text & Pause Button */
 .status-text {
   margin-top: 25px;
   font-weight: 800;
-  letter-spacing: 3px;
+  letter-spacing: 4px;
   font-family: "JetBrains Mono", monospace;
   font-size: 1rem;
 }
-
 .text-blue {
   color: var(--neon-blue);
   text-shadow: 0 0 10px var(--neon-blue-glow);
 }
 .text-red {
   color: var(--neon-red);
-  text-shadow: 0 0 10px rgba(255, 0, 60, 0.5);
+  text-shadow: 0 0 15px rgba(255, 0, 60, 0.6);
 }
 .text-white {
   color: #fff;
-  text-shadow: 0 0 15px var(--neon-blue);
+  text-shadow: 0 0 20px var(--neon-blue);
 }
 
-/* Pause Button Styling */
 .pause-btn {
   margin-top: 20px;
   padding: 10px 25px;
   background: rgba(255, 0, 60, 0.1);
   border: 1px solid var(--neon-red);
   color: var(--neon-red);
-  border-radius: 8px;
+  border-radius: 4px;
   font-family: "JetBrains Mono", monospace;
   font-weight: bold;
   cursor: pointer;
   letter-spacing: 2px;
   transition: all 0.3s ease;
-  box-shadow: 0 0 10px rgba(255, 0, 60, 0.2);
+  box-shadow: 0 0 15px rgba(255, 0, 60, 0.3);
 }
-
 .pause-btn:hover {
   background: var(--neon-red);
   color: #fff;
-  box-shadow: 0 0 20px rgba(255, 0, 60, 0.6);
-  transform: translateY(-2px);
-}
-
-@keyframes pulse-blue {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.4);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 20px rgba(0, 243, 255, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(0, 243, 255, 0);
-  }
-}
-
-@keyframes pulse-red {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(255, 0, 60, 0.5);
-  }
-  70% {
-    transform: scale(1.05);
-    box-shadow: 0 0 0 25px rgba(255, 0, 60, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(255, 0, 60, 0);
-  }
+  box-shadow: 0 0 30px rgba(255, 0, 60, 0.8);
+  transform: scale(1.05);
 }
 
 /* Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(0, 0, 0, 0.2);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 243, 255, 0.3);
+  background: var(--neon-blue);
   border-radius: 10px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 243, 255, 0.6);
 }
