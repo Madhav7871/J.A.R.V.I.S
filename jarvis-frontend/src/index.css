@@ -4,7 +4,12 @@
   --neon-blue: #00f3ff;
   --neon-blue-glow: rgba(0, 243, 255, 0.4);
   --neon-red: #ff003c;
-  --glass-bg: rgba(6, 10, 20, 0.75);
+  --glass-bg: rgba(
+    6,
+    10,
+    20,
+    0.85
+  ); /* Thoda solid kiya taaki blur load kam ho */
   --glass-border: rgba(0, 243, 255, 0.3);
   --text-main: #f8fafc;
 }
@@ -29,26 +34,28 @@ body {
   background-size: cover;
 }
 
-/* 🚀 HUD Container with Scanline Effect */
+/* 🚀 GPU Accelerated Container */
 .jarvis-container {
   width: 85vw;
   max-width: 1200px;
   height: 85vh;
   background: var(--glass-bg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(10px); /* Blur kam kiya for massive performance boost */
+  -webkit-backdrop-filter: blur(10px);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
   box-shadow:
-    0 0 40px rgba(0, 0, 0, 0.8),
-    inset 0 0 30px rgba(0, 243, 255, 0.05);
+    0 0 20px rgba(0, 0, 0, 0.8),
+    inset 0 0 15px rgba(0, 243, 255, 0.05);
   display: flex;
   flex-direction: column;
   position: relative;
   overflow: hidden;
+  transform: translateZ(0); /* Force Hardware Acceleration */
+  will-change: transform;
 }
 
-/* Holographic Scanline Overlay */
+/* Optimized Holographic Scanline */
 .jarvis-container::after {
   content: "";
   position: absolute;
@@ -58,14 +65,15 @@ body {
   height: 100%;
   background: linear-gradient(
     to bottom,
-    rgba(0, 243, 255, 0),
-    rgba(0, 243, 255, 0.05) 50%,
-    rgba(0, 243, 255, 0)
+    transparent,
+    rgba(0, 243, 255, 0.03) 50%,
+    transparent
   );
-  background-size: 100% 8px;
+  background-size: 100% 10px;
   pointer-events: none;
-  animation: scanline 6s linear infinite;
+  animation: scanline 8s linear infinite; /* Slowed down slightly for smooth frames */
   z-index: 10;
+  will-change: transform;
 }
 
 @keyframes scanline {
@@ -96,7 +104,7 @@ body {
   font-size: 1.5rem;
   letter-spacing: 3px;
   text-transform: uppercase;
-  text-shadow: 0 0 15px var(--neon-blue-glow);
+  text-shadow: 0 0 10px var(--neon-blue-glow);
 }
 
 .custom-header select {
@@ -109,7 +117,6 @@ body {
   font-weight: bold;
   outline: none;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(0, 243, 255, 0.1) inset;
 }
 
 /* Offline & Boot Screen */
@@ -129,7 +136,7 @@ body {
   letter-spacing: 5px;
   font-family: "JetBrains Mono", monospace;
   font-size: 2.5rem;
-  text-shadow: 0 0 20px var(--neon-blue-glow);
+  text-shadow: 0 0 15px var(--neon-blue-glow);
   margin: 0;
 }
 
@@ -144,35 +151,12 @@ body {
   font-weight: bold;
   font-family: "JetBrains Mono", monospace;
   letter-spacing: 3px;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 15px rgba(0, 243, 255, 0.2) inset;
-  position: relative;
-  overflow: hidden;
-}
-
-.boot-btn::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(0, 243, 255, 0.4),
-    transparent
-  );
-  transition: all 0.5s ease;
-}
-
-.boot-btn:hover::before {
-  left: 100%;
+  transition: all 0.2s ease;
 }
 .boot-btn:hover {
   background: var(--neon-blue);
   color: #000;
-  box-shadow: 0 0 40px var(--neon-blue-glow);
+  box-shadow: 0 0 20px var(--neon-blue-glow);
 }
 
 /* Chat Area */
@@ -209,10 +193,9 @@ body {
   color: #fff;
   font-family: "JetBrains Mono", monospace;
   border-bottom-left-radius: 0;
-  text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
 }
 
-/* 🚀 ARC REACTOR VISUALIZER */
+/* 🚀 OPTIMIZED ARC REACTOR (No Lag) */
 .hud-container {
   padding: 30px;
   border-top: 1px solid var(--glass-border);
@@ -232,6 +215,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
+  transform: translateZ(0);
 }
 
 .arc-ring-1,
@@ -239,20 +223,20 @@ body {
   position: absolute;
   border-radius: 50%;
   border: 2px dashed var(--neon-blue);
-  transition: all 0.3s ease;
+  will-change: transform; /* Tells GPU to handle this */
 }
 
 .arc-ring-1 {
   width: 100%;
   height: 100%;
-  animation: spinRight 10s linear infinite;
+  animation: spinRight 12s linear infinite;
   opacity: 0.5;
 }
 .arc-ring-2 {
   width: 75%;
   height: 75%;
   border-style: dotted;
-  animation: spinLeft 8s linear infinite;
+  animation: spinLeft 10s linear infinite;
   opacity: 0.8;
 }
 .orb-core {
@@ -260,8 +244,10 @@ body {
   height: 30px;
   background: var(--neon-blue);
   border-radius: 50%;
-  box-shadow: 0 0 20px var(--neon-blue);
-  transition: all 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  will-change: transform, box-shadow;
 }
 
 @keyframes spinRight {
@@ -275,7 +261,7 @@ body {
   }
 }
 
-/* Orb Status Modes */
+/* Optimized Orb Status Modes (Reduced Box Shadows) */
 .mode-sleep .arc-ring-1 {
   border-color: rgba(0, 243, 255, 0.2);
 }
@@ -284,33 +270,31 @@ body {
 }
 .mode-sleep .orb-core {
   background: rgba(0, 243, 255, 0.3);
-  box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
   animation: breathe 3s infinite;
 }
 
 .mode-awake .arc-ring-1,
 .mode-awake .arc-ring-2 {
   border-color: var(--neon-red);
-  animation-duration: 4s;
+  animation-duration: 6s;
 }
 .mode-awake .orb-core {
   background: var(--neon-red);
-  box-shadow: 0 0 40px var(--neon-red);
-  width: 40px;
-  height: 40px;
+  box-shadow: 0 0 20px var(--neon-red);
+  transform: scale(1.2);
 }
 
 .mode-speaking .arc-ring-1,
 .mode-speaking .arc-ring-2 {
   border-color: var(--neon-blue);
-  border-width: 4px;
-  animation-duration: 2s;
+  border-width: 3px;
+  animation-duration: 4s;
 }
 .mode-speaking .orb-core {
   background: #fff;
-  box-shadow: 0 0 60px var(--neon-blue);
-  width: 50px;
-  height: 50px;
+  box-shadow: 0 0 30px var(--neon-blue);
+  transform: scale(1.5);
 }
 
 @keyframes breathe {
@@ -319,7 +303,7 @@ body {
     transform: scale(1);
   }
   50% {
-    transform: scale(1.2);
+    transform: scale(1.1);
   }
 }
 
@@ -333,15 +317,13 @@ body {
 }
 .text-blue {
   color: var(--neon-blue);
-  text-shadow: 0 0 10px var(--neon-blue-glow);
 }
 .text-red {
   color: var(--neon-red);
-  text-shadow: 0 0 15px rgba(255, 0, 60, 0.6);
 }
 .text-white {
   color: #fff;
-  text-shadow: 0 0 20px var(--neon-blue);
+  text-shadow: 0 0 10px var(--neon-blue);
 }
 
 .pause-btn {
@@ -355,14 +337,13 @@ body {
   font-weight: bold;
   cursor: pointer;
   letter-spacing: 2px;
-  transition: all 0.3s ease;
-  box-shadow: 0 0 15px rgba(255, 0, 60, 0.3);
+  transition: all 0.2s ease;
 }
 .pause-btn:hover {
   background: var(--neon-red);
   color: #fff;
-  box-shadow: 0 0 30px rgba(255, 0, 60, 0.8);
-  transform: scale(1.05);
+  box-shadow: 0 0 15px rgba(255, 0, 60, 0.5);
+  transform: translateY(-2px);
 }
 
 /* Scrollbar */

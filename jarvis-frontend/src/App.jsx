@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import "./index.css";
 
 const personalities = {
@@ -17,7 +17,7 @@ function App() {
     { role: "jarvis", text: personalities["buddy"].greeting },
   ]);
   const [systemActive, setSystemActive] = useState(false);
-  const [isBooting, setIsBooting] = useState(false); // 🚀 NAYA HACKING BOOT STATE
+  const [isBooting, setIsBooting] = useState(false);
 
   const [isConversationMode, setIsConversationMode] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -28,12 +28,14 @@ function App() {
   const systemActiveRef = useRef(false);
   const chatEndRef = useRef(null);
 
+  // Smooth Scrolling
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // KILL SWITCH / PAUSE LOGIC
-  const pauseConversation = () => {
+  // KILL SWITCH (Optimized with useCallback to prevent re-renders)
+  const pauseConversation = useCallback(() => {
+    console.log("Protocol Paused!");
     isConversationModeRef.current = false;
     setIsConversationMode(false);
     setIsProcessing(false);
@@ -48,8 +50,9 @@ function App() {
         recognitionRef.current.abort();
       } catch (e) {}
     }
-  };
+  }, []);
 
+  // SPACEBAR SHORTCUT
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.code === "Space" && systemActiveRef.current) {
@@ -59,7 +62,7 @@ function App() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [pauseConversation]);
 
   // SPEECH RECOGNITION SETUP
   useEffect(() => {
@@ -130,16 +133,14 @@ function App() {
     };
 
     recognitionRef.current = recognition;
-  }, [isProcessing, isSpeaking, messages]);
+  }, [isProcessing, isSpeaking, messages]); // Removed heavy dependencies
 
-  // STRICT MALE VOICE LOGIC
   const speakResponse = (text) => {
     if ("speechSynthesis" in window) {
       if (recognitionRef.current) recognitionRef.current.abort();
 
       const utterance = new SpeechSynthesisUtterance(text);
       let voices = window.speechSynthesis.getVoices();
-
       if (voices.length === 0) voices = window.speechSynthesis.getVoices();
 
       let bestVoice = voices.find(
@@ -220,12 +221,9 @@ function App() {
     }
   };
 
-  // 🚀 BOOT SEQUENCE LOGIC
   const bootSystem = async () => {
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-
-      // Start fake hacking/boot animation
       setIsBooting(true);
 
       setTimeout(() => {
@@ -234,7 +232,7 @@ function App() {
         setSystemActive(true);
         if (recognitionRef.current) recognitionRef.current.start();
         window.speechSynthesis.getVoices();
-      }, 2500); // Wait for 2.5 seconds before showing main UI
+      }, 2000);
     } catch (err) {
       alert("Bro, J.A.R.V.I.S. needs mic access to hear you!");
     }
@@ -275,7 +273,6 @@ function App() {
         </select>
       </div>
 
-      {/* BOOTING / OFFLINE LOGIC */}
       {!systemActive ? (
         <div className="offline-screen">
           {isBooting ? (
@@ -283,7 +280,6 @@ function App() {
               style={{
                 animation: "breathe 1s infinite",
                 color: "var(--neon-red)",
-                textShadow: "0 0 20px var(--neon-red)",
               }}
             >
               INITIALIZING CORE PROTOCOLS...
@@ -309,7 +305,6 @@ function App() {
           </div>
 
           <div className="hud-container">
-            {/* 🚀 THE NEW ARC REACTOR VISUALIZER */}
             <div className={`arc-reactor ${getHudModeClass()}`}>
               <div className="arc-ring-1"></div>
               <div className="arc-ring-2"></div>
