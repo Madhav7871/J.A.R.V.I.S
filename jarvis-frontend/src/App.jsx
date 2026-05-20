@@ -28,12 +28,10 @@ function App() {
   const systemActiveRef = useRef(false);
   const chatEndRef = useRef(null);
 
-  // Smooth Scrolling
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // KILL SWITCH (Optimized with useCallback to prevent re-renders)
   const pauseConversation = useCallback(() => {
     console.log("Protocol Paused!");
     isConversationModeRef.current = false;
@@ -52,7 +50,6 @@ function App() {
     }
   }, []);
 
-  // SPACEBAR SHORTCUT
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.code === "Space" && systemActiveRef.current) {
@@ -64,7 +61,6 @@ function App() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [pauseConversation]);
 
-  // SPEECH RECOGNITION SETUP
   useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -133,7 +129,7 @@ function App() {
     };
 
     recognitionRef.current = recognition;
-  }, [isProcessing, isSpeaking, messages]); // Removed heavy dependencies
+  }, [isProcessing, isSpeaking, messages]);
 
   const speakResponse = (text) => {
     if ("speechSynthesis" in window) {
@@ -187,6 +183,7 @@ function App() {
     if (recognitionRef.current) recognitionRef.current.abort();
 
     try {
+      // Clean map for API
       const formattedHistory = messages.slice(1).map((msg) => ({
         role: msg.role === "jarvis" ? "model" : "user",
         parts: [{ text: msg.text }],
@@ -203,16 +200,22 @@ function App() {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
+
+      if (!response.ok) {
+        throw new Error(data.error || "Server connection failed.");
+      }
 
       setMessages((prev) => [...prev, { role: "jarvis", text: data.response }]);
       speakResponse(data.response);
     } catch (error) {
+      console.error("Frontend Error:", error.message);
+      // Now it shows EXACTLY why it failed on the screen!
       setMessages((prev) => [
         ...prev,
-        { role: "jarvis", text: "System Error. Mainframe offline." },
+        { role: "jarvis", text: `Error: ${error.message}` },
       ]);
       setIsProcessing(false);
+
       if (systemActiveRef.current && recognitionRef.current) {
         try {
           recognitionRef.current.start();
