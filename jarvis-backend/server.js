@@ -38,22 +38,19 @@ function switchKey() {
 }
 
 // ==========================================
-// 🤖 AUTO-SCANNER FOR CORRECT MODEL (THE FIX)
+// 🤖 AUTO-SCANNER FOR CORRECT MODEL
 // ==========================================
-let workingModel = "models/gemini-1.5-flash"; // Default fallback
+let workingModel = "models/gemini-1.5-flash";
 
 async function scanForValidModel() {
   if (apiKeys.length === 0) return;
-  console.log(
-    "📡 Scanning Google Servers to find the correct model for your API Key...",
-  );
+  console.log("📡 Scanning Google Servers to find the correct model...");
   try {
     const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${getActiveKey()}`;
     const response = await fetch(url);
     const data = await response.json();
 
     if (data.models) {
-      // Filter only valid conversational Gemini models
       const validModels = data.models.filter(
         (m) =>
           m.supportedGenerationMethods &&
@@ -62,7 +59,6 @@ async function scanForValidModel() {
       );
 
       if (validModels.length > 0) {
-        // Priority: 1.5 Flash -> 1.5 Pro -> Anything valid
         const flash = validModels.find((m) => m.name.includes("1.5-flash"));
         const pro = validModels.find((m) => m.name.includes("1.5-pro"));
 
@@ -78,11 +74,10 @@ async function scanForValidModel() {
     console.log("⚠️ Scan failed. Proceeding with default model.");
   }
 }
-// Run the scanner immediately when server starts
 scanForValidModel();
 
 // ==========================================
-// 🧠 J.A.R.V.I.S. MEMORY SYSTEM
+// 🧠 J.A.R.V.I.S. INTERNAL MEMORY SYSTEM
 // ==========================================
 const memoryFile = path.join(__dirname, "memory.json");
 if (!fs.existsSync(memoryFile))
@@ -100,7 +95,7 @@ function saveMemory(fact) {
 }
 
 // ==========================================
-// 🤖 MAIN CHAT API
+// 🤖 MAIN CHAT API WITH DIRECT NOTES SYSTEM
 // ==========================================
 app.post("/api/chat", async (req, res) => {
   try {
@@ -119,11 +114,11 @@ app.post("/api/chat", async (req, res) => {
         .trim();
       saveMemory(fact);
       return res.json({
-        response: `Got it. I have securely saved this to my memory: ${fact}`,
+        response: `Got it. I have securely saved this to my internal memory: ${fact}`,
       });
     }
 
-    // 2. DYNAMIC OS INSTRUCTION
+    // 2. DYNAMIC OS & NOTE INSTRUCTION
     const currentMemory = loadMemory();
     let memoryString =
       currentMemory.length > 0
@@ -132,17 +127,21 @@ app.post("/api/chat", async (req, res) => {
         : "";
 
     const dynamicOSInstruction = `
-    You have the ability to control the user's Windows PC. 
-    If the user asks you to open an app, search the web, or control the system, output a valid Windows CMD command wrapped exactly in this tag: <OS_CMD>command</OS_CMD>.
-    Examples:
-    - User: "Open Notepad" -> <OS_CMD>start notepad</OS_CMD> Opening Notepad now.
-    - User: "Open YouTube" -> <OS_CMD>start chrome "https://www.youtube.com"</OS_CMD> Opening YouTube.
-    If the user is chatting normally, do NOT use the <OS_CMD> tag. Keep replies concise.
+    You are connected to the user's Windows PC. You have TWO special powers:
+
+    POWER 1: RUN OS COMMANDS
+    If asked to open an app (like Chrome, VS Code), output exactly: <OS_CMD>command</OS_CMD>.
+    Example: User: "Open Notepad" -> <OS_CMD>start notepad</OS_CMD> Opening Notepad.
+
+    POWER 2: TAKE NOTES (DIRECT DICTATION)
+    If the user asks you to "note this down", "write a note saying...", or "take a note", extract ONLY the exact text they want saved and wrap it exactly in this tag: <MAKE_NOTE>text to save</MAKE_NOTE>. Do not add comments, bullets, or dates inside the tag. Just the clean text.
+    Example: User: "Take a note that buy groceries tomorrow" -> <MAKE_NOTE>buy groceries tomorrow</MAKE_NOTE> I have noted that down for you.
+
+    If the user is just chatting normally, do NOT use any tags.
     `;
 
     const finalInstruction = instruction + memoryString + dynamicOSInstruction;
 
-    // Filter out previous errors from chat history so Google doesn't reject the payload
     const cleanHistory = (history || []).filter(
       (msg) =>
         msg.parts &&
@@ -153,9 +152,7 @@ app.post("/api/chat", async (req, res) => {
     );
 
     const requestBody = {
-      system_instruction: {
-        parts: [{ text: finalInstruction }],
-      },
+      system_instruction: { parts: [{ text: finalInstruction }] },
       contents: [...cleanHistory, { role: "user", parts: [{ text: message }] }],
     };
 
@@ -180,10 +177,6 @@ app.post("/api/chat", async (req, res) => {
         }
 
         lastErrorDetail = data.error?.message || "Unknown API Error";
-        console.error(
-          `❌ API Error on Key #${currentKeyIndex + 1}:`,
-          lastErrorDetail,
-        );
 
         if (
           data.error?.code === 429 ||
@@ -195,7 +188,6 @@ app.post("/api/chat", async (req, res) => {
           lastErrorDetail.includes("not found for API version") ||
           lastErrorDetail.includes("not supported")
         ) {
-          // Auto-repair if model randomly fails
           console.log("⚠️ Current model unsupported. Retrying scan...");
           await scanForValidModel();
           throw new Error(`Model Error: ${lastErrorDetail}. Retrying...`);
@@ -215,23 +207,46 @@ app.post("/api/chat", async (req, res) => {
       }
     }
 
-    if (!aiResponseText) {
+    if (!aiResponseText)
       throw new Error(`All APIs failed. Last Error: ${lastErrorDetail}`);
-    }
 
-    // 3. EXECUTE OS COMMAND
+    // ==========================================
+    // ⚡ 3. EXECUTE OS COMMANDS OR TAKE NOTES
+    // ==========================================
+    const noteRegex = /<MAKE_NOTE>([\s\S]*?)<\/MAKE_NOTE>/;
     const cmdRegex = /<OS_CMD>(.*?)<\/OS_CMD>/;
-    const match = aiResponseText.match(cmdRegex);
 
-    if (match) {
-      const commandToRun = match[1];
+    const noteMatch = aiResponseText.match(noteRegex);
+    const cmdMatch = aiResponseText.match(cmdRegex);
+
+    if (noteMatch) {
+      // 🔥 THE FIX: Date aur timestamp completely removed. Direct clean append.
+      const noteContent = noteMatch[1].trim();
+      console.log(`📝 DIRECT NOTE DICTATION: ${noteContent}`);
+
+      const notesFilePath = path.join(__dirname, "Jarvis_Notes.txt");
+
+      // Seedha wahi line insert hogi jo tune boli hai, uske baad ek naya line brake (\n)
+      const formattedNote = `${noteContent}\n`;
+
+      fs.appendFileSync(notesFilePath, formattedNote);
+
+      // Pop up the text file inside Notepad
+      exec(`start notepad "${notesFilePath}"`, (error) => {
+        if (error) console.error(`Command failed: ${error.message}`);
+      });
+
+      aiResponseText = aiResponseText.replace(noteMatch[0], "").trim();
+      if (!aiResponseText) aiResponseText = "Noted, boss.";
+    } else if (cmdMatch) {
+      const commandToRun = cmdMatch[1];
       console.log(`⚡ EXECUTING AI COMMAND: ${commandToRun}`);
 
       exec(commandToRun, (error) => {
         if (error) console.error(`Command failed: ${error.message}`);
       });
 
-      aiResponseText = aiResponseText.replace(match[0], "").trim();
+      aiResponseText = aiResponseText.replace(cmdMatch[0], "").trim();
       if (!aiResponseText) aiResponseText = "Executing command now, boss.";
     }
 
@@ -245,5 +260,5 @@ app.post("/api/chat", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`🚀 J.A.R.V.I.S. Stable OS Mainframe running on port ${PORT}`);
+  console.log("🚀 J.A.R.V.I.S. Clean Dictation OS Mainframe Active.");
 });
