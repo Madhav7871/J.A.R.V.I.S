@@ -5,7 +5,7 @@ const personalities = {
   buddy: {
     label: "Protocol: Real Bro",
     instruction:
-      "You are the user's best friend, mentor, and guide. The user's name is Madhav. Talk exactly like a real, close friend would. Give highly practical, honest, and street-smart advice. You can mix Hindi and English (Hinglish) naturally. Never sound like a robot; be empathetic, supportive, and real. Keep answers concise for voice output.",
+      "You are the user's best friend, mentor, and guide. The user's name is Madhav. Talk exactly like a real, close friend would. Give highly practical, honest, and street-smart advice. You must smoothly mix Hindi and English (Hinglish) naturally in your responses. Be empathetic, supportive, and real. Keep answers concise for voice output.",
     greeting:
       "System booted. Arc Reactor Online. Say 'Jarvis' once to initialize connection.",
   },
@@ -131,6 +131,7 @@ function App() {
     recognitionRef.current = recognition;
   }, [isProcessing, isSpeaking, messages]);
 
+  // 🔥 THE NEW SMOOTH VOICE ENGINE
   const speakResponse = (text) => {
     if ("speechSynthesis" in window) {
       if (recognitionRef.current) recognitionRef.current.abort();
@@ -139,22 +140,38 @@ function App() {
       let voices = window.speechSynthesis.getVoices();
       if (voices.length === 0) voices = window.speechSynthesis.getVoices();
 
+      // 1. Priority to Natural Indian Hindi voices for smooth Hinglish
       let bestVoice = voices.find(
         (v) =>
-          v.name.includes("Hemant") ||
-          v.name.includes("Ravi") ||
-          v.name.includes("Google UK English Male") ||
-          v.name.toLowerCase().includes("male") ||
-          v.name.includes("David"),
+          v.name.includes("Google हिन्दी") ||
+          v.name.includes("Microsoft Hemant") ||
+          v.name.includes("Microsoft Ravi"),
       );
 
+      // 2. Fallback to any Indian English Male voice
+      if (!bestVoice) {
+        bestVoice = voices.find(
+          (v) =>
+            (v.lang.includes("hi-IN") || v.lang.includes("en-IN")) &&
+            (v.name.toLowerCase().includes("male") ||
+              v.name.includes("David") ||
+              v.name.includes("UK English Male")),
+        );
+      }
+
+      // 3. Ultimate Fallback
       if (!bestVoice)
         bestVoice = voices.find(
           (v) => v.lang.includes("en-IN") || v.lang.includes("hi-IN"),
         );
 
-      if (bestVoice) utterance.voice = bestVoice;
-      utterance.pitch = 0.9;
+      if (bestVoice) {
+        utterance.voice = bestVoice;
+        console.log("🔊 Speaking with:", bestVoice.name); // Check this in F12 to see which voice is active
+      }
+
+      // Pitch is 1.0 (natural) so it doesn't sound like a drunken robot. Rate slightly slowed.
+      utterance.pitch = 1.0;
       utterance.rate = 0.95;
 
       utterance.onstart = () => setIsSpeaking(true);
@@ -183,7 +200,6 @@ function App() {
     if (recognitionRef.current) recognitionRef.current.abort();
 
     try {
-      // Clean map for API
       const formattedHistory = messages.slice(1).map((msg) => ({
         role: msg.role === "jarvis" ? "model" : "user",
         parts: [{ text: msg.text }],
@@ -209,7 +225,6 @@ function App() {
       speakResponse(data.response);
     } catch (error) {
       console.error("Frontend Error:", error.message);
-      // Now it shows EXACTLY why it failed on the screen!
       setMessages((prev) => [
         ...prev,
         { role: "jarvis", text: `Error: ${error.message}` },

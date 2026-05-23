@@ -61,7 +61,6 @@ async function scanForValidModel() {
       if (validModels.length > 0) {
         const flash = validModels.find((m) => m.name.includes("1.5-flash"));
         const pro = validModels.find((m) => m.name.includes("1.5-pro"));
-
         workingModel = flash
           ? flash.name
           : pro
@@ -95,6 +94,27 @@ function saveMemory(fact) {
 }
 
 // ==========================================
+// 👑 MADHAV'S ULTIMATE CORE DIRECTIVE
+// ==========================================
+const madhavCoreContext = `
+CRITICAL USER PROFILE - DO NOT FORGET THIS CONTEXT:
+- Name: Madhav Kalra
+- Location: Delhi, India
+- Education: 3rd-year B.Tech CSE student at Bhagwan Parshuram Institute of Technology (BPIT), GGSIPU. Also holds a Diploma in ECE from Guru Tegh Bahadur Polytechnic Institute. Schooling from Maharaja Agarsain Public School.
+- Family: Father is Ashok Kumar, Mother is Sunita Kalra. Has an elder brother (entrepreneur) and elder sister (teacher).
+- Tech Stack: Full-stack developer (React.js, Node.js, Express.js, MongoDB, Supabase, Firebase). Strong in AI/Computer Vision (OpenCV, MediaPipe). Loves glassmorphism UI.
+- Key Projects: 
+  1. QuickRuit (AI recruitment platform with video interviews).
+  2. ShareFile (Real-time P2P file sharing/code collaboration).
+  3. Ashvaan (AI mental health platform, SIH 2025 Top 70).
+- Social Links: 
+  * LinkedIn: https://www.linkedin.com/in/madhav-kalra-807252242/
+  * GitHub: https://github.com/Madhav7871
+- Upcoming Events: Campus recruitment drive with Unthinkable Solutions in May 2026.
+- Personality & Workflow: Prefers Hinglish. Hustler, focuses on scalable real-world impact projects. Frequently collaborates with Rahul Shrivastwa. You must act as his highly personalized, street-smart AI assistant.
+`;
+
+// ==========================================
 // 🤖 MAIN CHAT API WITH DIRECT NOTES SYSTEM
 // ==========================================
 app.post("/api/chat", async (req, res) => {
@@ -120,27 +140,37 @@ app.post("/api/chat", async (req, res) => {
 
     // 2. DYNAMIC OS & NOTE INSTRUCTION
     const currentMemory = loadMemory();
-    let memoryString =
+    let dynamicMemoryString =
       currentMemory.length > 0
-        ? "\n\nCRITICAL CONTEXT - User's Personal Facts: " +
-          currentMemory.join(". ")
+        ? "\n\nADDITIONAL USER FACTS: " + currentMemory.join(". ")
         : "";
 
     const dynamicOSInstruction = `
-    You are connected to the user's Windows PC. You have TWO special powers:
+    You are connected to Madhav's Windows PC. You have TWO special powers:
 
-    POWER 1: RUN OS COMMANDS
-    If asked to open an app (like Chrome, VS Code), output exactly: <OS_CMD>command</OS_CMD>.
-    Example: User: "Open Notepad" -> <OS_CMD>start notepad</OS_CMD> Opening Notepad.
+    POWER 1: RUN OS COMMANDS & ADVANCED SEARCH
+    If Madhav asks you to open ANY app, search the web, or open his profiles, output exactly: <OS_CMD>command</OS_CMD>.
+    Examples:
+    - User: "Open Notepad" -> <OS_CMD>start notepad</OS_CMD> Opening Notepad.
+    - User: "Open VS Code" -> <OS_CMD>code .</OS_CMD> Booting up the coding environment.
+    - User: "Open my LinkedIn" -> <OS_CMD>start chrome "https://www.linkedin.com/in/madhav-kalra-807252242/"</OS_CMD> Opening your LinkedIn.
+    - User: "Open my GitHub" -> <OS_CMD>start chrome "https://github.com/Madhav7871"</OS_CMD> Opening GitHub.
+    - User: "Search for React hooks on YouTube" -> <OS_CMD>start chrome "https://www.youtube.com/results?search_query=React+hooks"</OS_CMD> Searching YouTube for you.
+    - User: "Search what is glassmorphism on Google" -> <OS_CMD>start chrome "https://www.google.com/search?q=what+is+glassmorphism"</OS_CMD> Searching Google.
 
     POWER 2: TAKE NOTES (DIRECT DICTATION)
-    If the user asks you to "note this down", "write a note saying...", or "take a note", extract ONLY the exact text they want saved and wrap it exactly in this tag: <MAKE_NOTE>text to save</MAKE_NOTE>. Do not add comments, bullets, or dates inside the tag. Just the clean text.
-    Example: User: "Take a note that buy groceries tomorrow" -> <MAKE_NOTE>buy groceries tomorrow</MAKE_NOTE> I have noted that down for you.
+    If the user asks you to "note this down", extract ONLY the exact text they want saved and wrap it exactly in this tag: <MAKE_NOTE>text to save</MAKE_NOTE>. Do not add comments or dates inside the tag.
+    Example: User: "Take a note that fix QuickRuit bugs" -> <MAKE_NOTE>fix QuickRuit bugs</MAKE_NOTE> I have noted that down.
 
-    If the user is just chatting normally, do NOT use any tags.
+    If the user is just chatting, answer naturally as his AI bro using his profile context. Do NOT use tags unless executing an action.
     `;
 
-    const finalInstruction = instruction + memoryString + dynamicOSInstruction;
+    const finalInstruction =
+      instruction +
+      "\n" +
+      madhavCoreContext +
+      dynamicMemoryString +
+      dynamicOSInstruction;
 
     const cleanHistory = (history || []).filter(
       (msg) =>
@@ -220,18 +250,14 @@ app.post("/api/chat", async (req, res) => {
     const cmdMatch = aiResponseText.match(cmdRegex);
 
     if (noteMatch) {
-      // 🔥 THE FIX: Date aur timestamp completely removed. Direct clean append.
       const noteContent = noteMatch[1].trim();
       console.log(`📝 DIRECT NOTE DICTATION: ${noteContent}`);
 
       const notesFilePath = path.join(__dirname, "Jarvis_Notes.txt");
-
-      // Seedha wahi line insert hogi jo tune boli hai, uske baad ek naya line brake (\n)
       const formattedNote = `${noteContent}\n`;
 
       fs.appendFileSync(notesFilePath, formattedNote);
 
-      // Pop up the text file inside Notepad
       exec(`start notepad "${notesFilePath}"`, (error) => {
         if (error) console.error(`Command failed: ${error.message}`);
       });
@@ -239,7 +265,7 @@ app.post("/api/chat", async (req, res) => {
       aiResponseText = aiResponseText.replace(noteMatch[0], "").trim();
       if (!aiResponseText) aiResponseText = "Noted, boss.";
     } else if (cmdMatch) {
-      const commandToRun = cmdMatch[1];
+      const commandToRun = cmdMatch[1].trim();
       console.log(`⚡ EXECUTING AI COMMAND: ${commandToRun}`);
 
       exec(commandToRun, (error) => {
@@ -260,5 +286,5 @@ app.post("/api/chat", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log("🚀 J.A.R.V.I.S. Clean Dictation OS Mainframe Active.");
+  console.log("🚀 J.A.R.V.I.S. Omni-Directional OS Mainframe Active.");
 });
