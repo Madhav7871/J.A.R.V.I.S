@@ -1,66 +1,29 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import "./index.css";
 
-const personalities = {
-  buddy: {
-    label: "Protocol: Real Bro",
-    instruction:
-      "You are the user's best friend, mentor, and guide. The user's name is Madhav. Talk exactly like a real, close friend would. Give highly practical, honest, and street-smart advice. You must smoothly mix Hindi and English (Hinglish) naturally in your responses. Be empathetic, supportive, and real. Keep answers concise for voice output.",
-    greeting:
-      "System booted. Arc Reactor Online. Say 'Jarvis' once to initialize connection.",
-  },
-};
-
 function App() {
-  const [activePersonality, setActivePersonality] = useState("buddy");
   const [messages, setMessages] = useState([
-    { role: "jarvis", text: personalities["buddy"].greeting },
+    {
+      role: "jarvis",
+      text: "Systems online. OS control module active. How can I assist you today, Madhav?",
+    },
   ]);
-  const [systemActive, setSystemActive] = useState(false);
-  const [isBooting, setIsBooting] = useState(false);
+  const [inputText, setInputText] = useState("");
 
-  const [isConversationMode, setIsConversationMode] = useState(false);
+  const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const recognitionRef = useRef(null);
-  const isConversationModeRef = useRef(false);
-  const systemActiveRef = useRef(false);
+  const isVoiceModeRef = useRef(false);
   const chatEndRef = useRef(null);
 
+  // Auto-scroll to latest message
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const pauseConversation = useCallback(() => {
-    console.log("Protocol Paused!");
-    isConversationModeRef.current = false;
-    setIsConversationMode(false);
-    setIsProcessing(false);
-
-    if ("speechSynthesis" in window) {
-      window.speechSynthesis.cancel();
-    }
-    setIsSpeaking(false);
-
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.abort();
-      } catch (e) {}
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.code === "Space" && systemActiveRef.current) {
-        e.preventDefault();
-        pauseConversation();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [pauseConversation]);
-
+  // Voice Recognition Setup
   useEffect(() => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -73,44 +36,19 @@ function App() {
 
     recognition.onresult = (event) => {
       const current = event.resultIndex;
-      const transcript = event.results[current][0].transcript
-        .toLowerCase()
-        .trim();
+      const transcript = event.results[current][0].transcript.trim();
 
       if (isProcessing || isSpeaking) return;
 
-      if (!isConversationModeRef.current) {
-        if (
-          transcript.includes("jarvis") ||
-          transcript.includes("service") ||
-          transcript.includes("charvis")
-        ) {
-          const beep = new Audio(
-            "https://www.soundjay.com/buttons/sounds/button-09.mp3",
-          );
-          beep.play().catch((e) => console.log(e));
-
-          isConversationModeRef.current = true;
-          setIsConversationMode(true);
-
-          const parts = transcript.split(/jarvis|service|charvis/);
-          const command = parts[1]?.trim();
-
-          if (command && command.length > 2) {
-            handleSendVoice(command);
-          }
-        }
-      } else {
-        if (transcript.length > 2) {
-          handleSendVoice(transcript);
-        }
+      if (isVoiceModeRef.current && transcript.length > 2) {
+        handleSendMessage(transcript);
       }
     };
 
     recognition.onerror = (event) => {
       if (
         event.error === "no-speech" &&
-        systemActiveRef.current &&
+        isVoiceModeRef.current &&
         !isProcessing &&
         !isSpeaking
       ) {
@@ -121,7 +59,7 @@ function App() {
     };
 
     recognition.onend = () => {
-      if (systemActiveRef.current && !isProcessing && !isSpeaking) {
+      if (isVoiceModeRef.current && !isProcessing && !isSpeaking) {
         try {
           recognition.start();
         } catch (e) {}
@@ -131,46 +69,63 @@ function App() {
     recognitionRef.current = recognition;
   }, [isProcessing, isSpeaking, messages]);
 
-  // 🔥 THE NEW SMOOTH VOICE ENGINE
+  const toggleVoiceMode = async () => {
+    if (isVoiceMode) {
+      // Turn off voice
+      isVoiceModeRef.current = false;
+      setIsVoiceMode(false);
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch (e) {}
+      }
+      if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+    } else {
+      // Turn on voice
+      try {
+        await navigator.mediaDevices.getUserMedia({ audio: true });
+        isVoiceModeRef.current = true;
+        setIsVoiceMode(true);
+        if (recognitionRef.current) recognitionRef.current.start();
+        const beep = new Audio(
+          "https://www.soundjay.com/buttons/sounds/button-09.mp3",
+        );
+        beep.play().catch((e) => console.log(e));
+      } catch (err) {
+        alert("Microphone access is required for Voice Mode.");
+      }
+    }
+  };
+
   const speakResponse = (text) => {
+    // Only speak out loud if Voice Mode is active
+    if (!isVoiceModeRef.current) return;
+
     if ("speechSynthesis" in window) {
       if (recognitionRef.current) recognitionRef.current.abort();
 
       const utterance = new SpeechSynthesisUtterance(text);
       let voices = window.speechSynthesis.getVoices();
-      if (voices.length === 0) voices = window.speechSynthesis.getVoices();
 
-      // 1. Priority to Natural Indian Hindi voices for smooth Hinglish
       let bestVoice = voices.find(
         (v) =>
           v.name.includes("Google हिन्दी") ||
           v.name.includes("Microsoft Hemant") ||
           v.name.includes("Microsoft Ravi"),
       );
-
-      // 2. Fallback to any Indian English Male voice
-      if (!bestVoice) {
+      if (!bestVoice)
         bestVoice = voices.find(
           (v) =>
             (v.lang.includes("hi-IN") || v.lang.includes("en-IN")) &&
-            (v.name.toLowerCase().includes("male") ||
-              v.name.includes("David") ||
-              v.name.includes("UK English Male")),
+            v.name.toLowerCase().includes("male"),
         );
-      }
-
-      // 3. Ultimate Fallback
       if (!bestVoice)
         bestVoice = voices.find(
           (v) => v.lang.includes("en-IN") || v.lang.includes("hi-IN"),
         );
 
-      if (bestVoice) {
-        utterance.voice = bestVoice;
-        console.log("🔊 Speaking with:", bestVoice.name); // Check this in F12 to see which voice is active
-      }
-
-      // Pitch is 1.0 (natural) so it doesn't sound like a drunken robot. Rate slightly slowed.
+      if (bestVoice) utterance.voice = bestVoice;
       utterance.pitch = 1.0;
       utterance.rate = 0.95;
 
@@ -178,7 +133,7 @@ function App() {
 
       utterance.onend = () => {
         setIsSpeaking(false);
-        if (systemActiveRef.current && isConversationModeRef.current) {
+        if (isVoiceModeRef.current) {
           if (recognitionRef.current) {
             try {
               recognitionRef.current.start();
@@ -191,10 +146,18 @@ function App() {
     }
   };
 
-  const handleSendVoice = async (voiceText) => {
-    if (!voiceText.trim()) return;
+  const handleTextSubmit = (e) => {
+    e.preventDefault();
+    if (inputText.trim() && !isProcessing) {
+      handleSendMessage(inputText);
+      setInputText("");
+    }
+  };
 
-    setMessages((prev) => [...prev, { role: "user", text: voiceText }]);
+  const handleSendMessage = async (textPayload) => {
+    if (!textPayload.trim()) return;
+
+    setMessages((prev) => [...prev, { role: "user", text: textPayload }]);
     setIsProcessing(true);
 
     if (recognitionRef.current) recognitionRef.current.abort();
@@ -209,17 +172,15 @@ function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: voiceText,
+          message: textPayload,
           history: formattedHistory,
-          instruction: personalities[activePersonality].instruction,
+          instruction: "Keep answers concise. Use Hinglish if appropriate.",
         }),
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
+      if (!response.ok)
         throw new Error(data.error || "Server connection failed.");
-      }
 
       setMessages((prev) => [...prev, { role: "jarvis", text: data.response }]);
       speakResponse(data.response);
@@ -229,9 +190,9 @@ function App() {
         ...prev,
         { role: "jarvis", text: `Error: ${error.message}` },
       ]);
+    } finally {
       setIsProcessing(false);
-
-      if (systemActiveRef.current && recognitionRef.current) {
+      if (isVoiceModeRef.current && recognitionRef.current) {
         try {
           recognitionRef.current.start();
         } catch (e) {}
@@ -239,108 +200,79 @@ function App() {
     }
   };
 
-  const bootSystem = async () => {
-    try {
-      await navigator.mediaDevices.getUserMedia({ audio: true });
-      setIsBooting(true);
-
-      setTimeout(() => {
-        setIsBooting(false);
-        systemActiveRef.current = true;
-        setSystemActive(true);
-        if (recognitionRef.current) recognitionRef.current.start();
-        window.speechSynthesis.getVoices();
-      }, 2000);
-    } catch (err) {
-      alert("Bro, J.A.R.V.I.S. needs mic access to hear you!");
-    }
-  };
-
-  const getHudModeClass = () => {
-    if (isSpeaking) return "mode-speaking";
-    if (isConversationMode || isProcessing) return "mode-awake";
-    return "mode-sleep";
-  };
-
-  const getStatusText = () => {
-    if (isSpeaking) return "TRANSMITTING DATA...";
-    if (isProcessing) return "PROCESSING...";
-    if (isConversationMode) return "SYSTEM ACTIVE...";
-    return "AWAITING 'JARVIS'...";
-  };
-
-  const getStatusColorClass = () => {
-    if (isSpeaking) return "text-white";
-    if (isConversationMode || isProcessing) return "text-red";
-    return "text-blue";
+  const getVoiceBtnClass = () => {
+    if (isSpeaking) return "voice-toggle-btn speaking";
+    if (isVoiceMode) return "voice-toggle-btn awake";
+    return "voice-toggle-btn";
   };
 
   return (
     <div className="jarvis-container">
+      {/* Header */}
       <div className="custom-header">
-        <h1>● J.A.R.V.I.S. INTERFACE</h1>
-        <select
-          value={activePersonality}
-          onChange={(e) => setActivePersonality(e.target.value)}
-        >
-          {Object.keys(personalities).map((key) => (
-            <option key={key} value={key}>
-              {personalities[key].label}
-            </option>
-          ))}
-        </select>
+        <h1>
+          <div className="status-dot"></div>
+          J.A.R.V.I.S. // CORE_TERMINAL
+        </h1>
+        <div style={{ color: "var(--text-muted)", fontSize: "0.85rem" }}>
+          {isProcessing
+            ? "Processing Data..."
+            : isVoiceMode
+              ? "Listening..."
+              : "Awaiting Input"}
+        </div>
       </div>
 
-      {!systemActive ? (
-        <div className="offline-screen">
-          {isBooting ? (
-            <h2
-              style={{
-                animation: "breathe 1s infinite",
-                color: "var(--neon-red)",
-              }}
-            >
-              INITIALIZING CORE PROTOCOLS...
-            </h2>
-          ) : (
-            <>
-              <h2>SYSTEM OFFLINE</h2>
-              <button className="boot-btn" onClick={bootSystem}>
-                BOOT J.A.R.V.I.S.
-              </button>
-            </>
-          )}
-        </div>
-      ) : (
-        <>
-          <div className="chat-area">
-            {messages.map((msg, index) => (
-              <div key={index} className={`chat-message ${msg.role}`}>
-                {msg.text}
-              </div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
-
-          <div className="hud-container">
-            <div className={`arc-reactor ${getHudModeClass()}`}>
-              <div className="arc-ring-1"></div>
-              <div className="arc-ring-2"></div>
-              <div className="orb-core"></div>
+      {/* Chat Area */}
+      <div className="chat-area">
+        {messages.map((msg, index) => (
+          <div key={index} className={`chat-message ${msg.role}`}>
+            <div className="msg-label">
+              {msg.role === "jarvis" ? "J.A.R.V.I.S." : "Madhav"}
             </div>
-
-            <p className={`status-text ${getStatusColorClass()}`}>
-              {getStatusText()}
-            </p>
-
-            {isConversationMode && (
-              <button className="pause-btn" onClick={pauseConversation}>
-                ⏸ PAUSE PROTOCOL (SPACE)
-              </button>
-            )}
+            {msg.text}
           </div>
-        </>
-      )}
+        ))}
+        {isProcessing && (
+          <div className="chat-message jarvis" style={{ opacity: 0.6 }}>
+            Typing...
+          </div>
+        )}
+        <div ref={chatEndRef} />
+      </div>
+
+      {/* Input Area (Hybrid) */}
+      <div className="input-container">
+        <form className="text-input-form" onSubmit={handleTextSubmit}>
+          <input
+            type="text"
+            className="chat-input"
+            placeholder={
+              isVoiceMode
+                ? "Voice mode active (Speak or type)..."
+                : "Type a command..."
+            }
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            disabled={isProcessing}
+          />
+          <button
+            type="submit"
+            className="send-btn"
+            disabled={isProcessing || !inputText.trim()}
+          >
+            Send
+          </button>
+        </form>
+
+        <button
+          className={getVoiceBtnClass()}
+          onClick={toggleVoiceMode}
+          title="Toggle Voice Protocol"
+        >
+          <span className="mic-icon">{isVoiceMode ? "🎙️" : "🎤"}</span>
+        </button>
+      </div>
     </div>
   );
 }

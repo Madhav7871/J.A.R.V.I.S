@@ -1,88 +1,56 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap");
 
 :root {
-  --neon-blue: #00f3ff;
-  --neon-blue-glow: rgba(0, 243, 255, 0.4);
-  --neon-red: #ff003c;
-  --glass-bg: rgba(
-    6,
-    10,
-    20,
-    0.85
-  ); /* Thoda solid kiya taaki blur load kam ho */
-  --glass-border: rgba(0, 243, 255, 0.3);
-  --text-main: #f8fafc;
+  --bg-color: #0b0f19;
+  --glass-bg: rgba(15, 23, 42, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --primary-accent: #00f3ff;
+  --accent-glow: rgba(0, 243, 255, 0.3);
+  --text-main: #f1f5f9;
+  --text-muted: #94a3b8;
+  --user-msg-bg: rgba(0, 243, 255, 0.1);
+  --ai-msg-bg: rgba(30, 41, 59, 0.7);
 }
 
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
 body {
-  margin: 0;
-  padding: 0;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
   font-family: "Inter", sans-serif;
   color: var(--text-main);
+  background: var(--bg-color);
+  background-image:
+    radial-gradient(
+      circle at 15% 50%,
+      rgba(0, 243, 255, 0.08),
+      transparent 25%
+    ),
+    radial-gradient(circle at 85% 30%, rgba(0, 243, 255, 0.05), transparent 25%);
   display: flex;
   justify-content: center;
   align-items: center;
-  background: url("https://images.unsplash.com/photo-1614729939124-032f0b56c9ce?q=80&w=2000&auto=format&fit=crop")
-    no-repeat center center fixed;
-  background-size: cover;
 }
 
-/* 🚀 GPU Accelerated Container */
+/* 🚀 Premium Dashboard Container */
 .jarvis-container {
-  width: 85vw;
-  max-width: 1200px;
-  height: 85vh;
+  width: 90vw;
+  max-width: 1100px;
+  height: 90vh;
   background: var(--glass-bg);
-  backdrop-filter: blur(10px); /* Blur kam kiya for massive performance boost */
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
-  box-shadow:
-    0 0 20px rgba(0, 0, 0, 0.8),
-    inset 0 0 15px rgba(0, 243, 255, 0.05);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  position: relative;
   overflow: hidden;
-  transform: translateZ(0); /* Force Hardware Acceleration */
-  will-change: transform;
-}
-
-/* Optimized Holographic Scanline */
-.jarvis-container::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(
-    to bottom,
-    transparent,
-    rgba(0, 243, 255, 0.03) 50%,
-    transparent
-  );
-  background-size: 100% 10px;
-  pointer-events: none;
-  animation: scanline 8s linear infinite; /* Slowed down slightly for smooth frames */
-  z-index: 10;
-  will-change: transform;
-}
-
-@keyframes scanline {
-  0% {
-    transform: translateY(-100%);
-  }
-  100% {
-    transform: translateY(100%);
-  }
 }
 
 /* Header */
@@ -90,73 +58,41 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 30px;
-  background: rgba(0, 0, 0, 0.6);
+  padding: 18px 30px;
+  background: rgba(11, 15, 25, 0.8);
   border-bottom: 1px solid var(--glass-border);
-  position: relative;
-  z-index: 20;
 }
 
 .custom-header h1 {
-  margin: 0;
-  color: var(--neon-blue);
   font-family: "JetBrains Mono", monospace;
-  font-size: 1.5rem;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  text-shadow: 0 0 10px var(--neon-blue-glow);
-}
-
-.custom-header select {
-  background: rgba(0, 0, 0, 0.6);
-  color: var(--neon-blue);
-  border: 1px solid var(--neon-blue);
-  padding: 8px 15px;
-  border-radius: 4px;
-  font-family: "JetBrains Mono", monospace;
-  font-weight: bold;
-  outline: none;
-  cursor: pointer;
-}
-
-/* Offline & Boot Screen */
-.offline-screen {
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: var(--text-main);
   display: flex;
-  flex: 1;
-  flex-direction: column;
-  justify-content: center;
   align-items: center;
-  gap: 30px;
-  position: relative;
-  z-index: 20;
+  gap: 10px;
 }
 
-.offline-screen h2 {
-  color: var(--neon-blue);
-  letter-spacing: 5px;
-  font-family: "JetBrains Mono", monospace;
-  font-size: 2.5rem;
-  text-shadow: 0 0 15px var(--neon-blue-glow);
-  margin: 0;
+.status-dot {
+  width: 8px;
+  height: 8px;
+  background-color: var(--primary-accent);
+  border-radius: 50%;
+  box-shadow: 0 0 10px var(--accent-glow);
+  animation: pulse 2s infinite;
 }
 
-.boot-btn {
-  padding: 15px 50px;
-  font-size: 1.2rem;
-  background: rgba(0, 243, 255, 0.05);
-  color: var(--neon-blue);
-  border: 2px solid var(--neon-blue);
-  border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  font-family: "JetBrains Mono", monospace;
-  letter-spacing: 3px;
-  transition: all 0.2s ease;
-}
-.boot-btn:hover {
-  background: var(--neon-blue);
-  color: #000;
-  box-shadow: 0 0 20px var(--neon-blue-glow);
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(0, 243, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 243, 255, 0);
+  }
 }
 
 /* Chat Area */
@@ -166,184 +102,146 @@ body {
   padding: 30px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  position: relative;
-  z-index: 20;
+  gap: 24px;
+  scroll-behavior: smooth;
 }
 
 .chat-message {
-  max-width: 80%;
-  padding: 15px 20px;
-  border-radius: 8px;
-  line-height: 1.5;
-  font-size: 1.05rem;
+  max-width: 75%;
+  padding: 16px 20px;
+  border-radius: 12px;
+  line-height: 1.6;
+  font-size: 1rem;
+  position: relative;
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .chat-message.user {
   align-self: flex-end;
-  background: rgba(0, 243, 255, 0.1);
-  border-left: 3px solid var(--neon-blue);
-  border-bottom-right-radius: 0;
+  background: var(--user-msg-bg);
+  border: 1px solid rgba(0, 243, 255, 0.2);
+  border-bottom-right-radius: 4px;
 }
 
 .chat-message.jarvis {
   align-self: flex-start;
-  background: rgba(0, 0, 0, 0.5);
-  border-right: 3px solid var(--neon-blue);
-  color: #fff;
-  font-family: "JetBrains Mono", monospace;
-  border-bottom-left-radius: 0;
+  background: var(--ai-msg-bg);
+  border: 1px solid var(--glass-border);
+  border-bottom-left-radius: 4px;
+  font-family: "Inter", sans-serif;
 }
 
-/* 🚀 OPTIMIZED ARC REACTOR (No Lag) */
-.hud-container {
-  padding: 30px;
+.msg-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* 🚀 Hybrid Input Area */
+.input-container {
+  padding: 20px 30px;
+  background: rgba(11, 15, 25, 0.6);
   border-top: 1px solid var(--glass-border);
-  background: rgba(0, 0, 0, 0.6);
   display: flex;
-  justify-content: center;
+  gap: 15px;
   align-items: center;
-  flex-direction: column;
-  position: relative;
-  z-index: 20;
 }
 
-.arc-reactor {
-  position: relative;
-  width: 100px;
-  height: 100px;
+.text-input-form {
+  flex: 1;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  transform: translateZ(0);
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--glass-border);
+  transition: all 0.3s ease;
 }
 
-.arc-ring-1,
-.arc-ring-2 {
-  position: absolute;
-  border-radius: 50%;
-  border: 2px dashed var(--neon-blue);
-  will-change: transform; /* Tells GPU to handle this */
-}
-
-.arc-ring-1 {
-  width: 100%;
-  height: 100%;
-  animation: spinRight 12s linear infinite;
-  opacity: 0.5;
-}
-.arc-ring-2 {
-  width: 75%;
-  height: 75%;
-  border-style: dotted;
-  animation: spinLeft 10s linear infinite;
-  opacity: 0.8;
-}
-.orb-core {
-  width: 30px;
-  height: 30px;
-  background: var(--neon-blue);
-  border-radius: 50%;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-  will-change: transform, box-shadow;
-}
-
-@keyframes spinRight {
-  100% {
-    transform: rotate(360deg);
-  }
-}
-@keyframes spinLeft {
-  100% {
-    transform: rotate(-360deg);
-  }
-}
-
-/* Optimized Orb Status Modes (Reduced Box Shadows) */
-.mode-sleep .arc-ring-1 {
-  border-color: rgba(0, 243, 255, 0.2);
-}
-.mode-sleep .arc-ring-2 {
+.text-input-form:focus-within {
   border-color: rgba(0, 243, 255, 0.4);
-}
-.mode-sleep .orb-core {
-  background: rgba(0, 243, 255, 0.3);
-  box-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
-  animation: breathe 3s infinite;
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.05);
 }
 
-.mode-awake .arc-ring-1,
-.mode-awake .arc-ring-2 {
-  border-color: var(--neon-red);
-  animation-duration: 6s;
-}
-.mode-awake .orb-core {
-  background: var(--neon-red);
-  box-shadow: 0 0 20px var(--neon-red);
-  transform: scale(1.2);
-}
-
-.mode-speaking .arc-ring-1,
-.mode-speaking .arc-ring-2 {
-  border-color: var(--neon-blue);
-  border-width: 3px;
-  animation-duration: 4s;
-}
-.mode-speaking .orb-core {
-  background: #fff;
-  box-shadow: 0 0 30px var(--neon-blue);
-  transform: scale(1.5);
-}
-
-@keyframes breathe {
-  0%,
-  100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-}
-
-/* Status Text & Pause Button */
-.status-text {
-  margin-top: 25px;
-  font-weight: 800;
-  letter-spacing: 4px;
-  font-family: "JetBrains Mono", monospace;
+.chat-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-main);
   font-size: 1rem;
+  font-family: "Inter", sans-serif;
+  outline: none;
+  padding: 8px;
 }
-.text-blue {
-  color: var(--neon-blue);
-}
-.text-red {
-  color: var(--neon-red);
-}
-.text-white {
-  color: #fff;
-  text-shadow: 0 0 10px var(--neon-blue);
+.chat-input::placeholder {
+  color: var(--text-muted);
 }
 
-.pause-btn {
-  margin-top: 20px;
-  padding: 10px 25px;
-  background: rgba(255, 0, 60, 0.1);
-  border: 1px solid var(--neon-red);
-  color: var(--neon-red);
-  border-radius: 4px;
-  font-family: "JetBrains Mono", monospace;
-  font-weight: bold;
+.send-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--glass-border);
+  color: var(--text-main);
+  border-radius: 6px;
+  padding: 8px 16px;
   cursor: pointer;
-  letter-spacing: 2px;
+  font-weight: 500;
   transition: all 0.2s ease;
 }
-.pause-btn:hover {
-  background: var(--neon-red);
-  color: #fff;
-  box-shadow: 0 0 15px rgba(255, 0, 60, 0.5);
-  transform: translateY(-2px);
+.send-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Voice Toggle Button (The Arc Mini) */
+.voice-toggle-btn {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid var(--glass-border);
+}
+
+.voice-toggle-btn.awake {
+  background: rgba(0, 243, 255, 0.1);
+  border-color: var(--primary-accent);
+  box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+}
+
+.voice-toggle-btn.speaking {
+  background: rgba(255, 0, 60, 0.15);
+  border-color: #ff003c;
+  box-shadow: 0 0 20px rgba(255, 0, 60, 0.4);
+}
+
+.mic-icon {
+  font-size: 1.2rem;
+  color: var(--text-muted);
+}
+.voice-toggle-btn.awake .mic-icon {
+  color: var(--primary-accent);
+}
+.voice-toggle-btn.speaking .mic-icon {
+  color: #ff003c;
+  animation: breathe 1.5s infinite;
 }
 
 /* Scrollbar */
@@ -351,9 +249,12 @@ body {
   width: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--neon-blue);
+  background: rgba(255, 255, 255, 0.1);
   border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
