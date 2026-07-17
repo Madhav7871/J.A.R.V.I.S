@@ -3,6 +3,7 @@ const cors = require("cors");
 const { exec } = require("child_process");
 const fs = require("fs");
 const path = require("path");
+const googleTTS = require("google-tts-api");
 require("dotenv").config();
 
 const app = express();
@@ -276,7 +277,23 @@ app.post("/api/chat", async (req, res) => {
       if (!aiResponseText) aiResponseText = "Executing command now, boss.";
     }
 
-    res.json({ response: aiResponseText });
+    // ==========================================
+    // 🔊 GENERATE PREMIUM VOICE AUDIO URLS
+    // ==========================================
+    let audioUrls = [];
+    try {
+      // google-tts-api lambe text ko automatically chhote MP3 chunks mein tod deta hai
+      audioUrls = googleTTS.getAllAudioUrls(aiResponseText, {
+        lang: "en-IN", // Indian English accent - Hinglish ke liye sabse smooth aur natural
+        slow: false,
+        host: "https://translate.google.com",
+      });
+    } catch (err) {
+      console.error("TTS Audio Generation Failed:", err);
+    }
+
+    // Ab text aur audio dono frontend par jayenge
+    res.json({ response: aiResponseText, audioUrls: audioUrls });
   } catch (error) {
     console.error("Backend Catch:", error.message);
     res
@@ -286,5 +303,5 @@ app.post("/api/chat", async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log("🚀 J.A.R.V.I.S. Omni-Directional OS Mainframe Active.");
+  console.log("🚀 J.A.R.V.I.S. Premium Voice Mainframe Active.");
 });

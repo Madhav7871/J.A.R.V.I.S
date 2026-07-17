@@ -23,6 +23,13 @@ function App() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // Force load voices on mount
+  useEffect(() => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.getVoices();
+    }
+  }, []);
+
   // Voice Recognition Setup
   useEffect(() => {
     const SpeechRecognition =
@@ -98,52 +105,62 @@ function App() {
     }
   };
 
+  // 🔥 THE BULLETPROOF LOCAL AUDIO PLAYER
   const speakResponse = (text) => {
-    // Only speak out loud if Voice Mode is active
-    if (!isVoiceModeRef.current) return;
+    if (!text || !("speechSynthesis" in window)) return;
 
-    if ("speechSynthesis" in window) {
-      if (recognitionRef.current) recognitionRef.current.abort();
+    // Pehle ka koi ruka hua text clear karo
+    window.speechSynthesis.cancel();
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      let voices = window.speechSynthesis.getVoices();
+    const utterance = new SpeechSynthesisUtterance(text);
+    let voices = window.speechSynthesis.getVoices();
 
-      let bestVoice = voices.find(
+    // Priority to Indian/Hindi Voices
+    let bestVoice = voices.find(
+      (v) =>
+        v.name.includes("Google हिन्दी") ||
+        v.name.includes("Hemant") ||
+        v.name.includes("Ravi"),
+    );
+
+    // Fallback to any Indian English Male
+    if (!bestVoice) {
+      bestVoice = voices.find(
         (v) =>
-          v.name.includes("Google हिन्दी") ||
-          v.name.includes("Microsoft Hemant") ||
-          v.name.includes("Microsoft Ravi"),
+          (v.lang.includes("hi-IN") || v.lang.includes("en-IN")) &&
+          v.name.toLowerCase().includes("male"),
       );
-      if (!bestVoice)
-        bestVoice = voices.find(
-          (v) =>
-            (v.lang.includes("hi-IN") || v.lang.includes("en-IN")) &&
-            v.name.toLowerCase().includes("male"),
-        );
-      if (!bestVoice)
-        bestVoice = voices.find(
-          (v) => v.lang.includes("en-IN") || v.lang.includes("hi-IN"),
-        );
-
-      if (bestVoice) utterance.voice = bestVoice;
-      utterance.pitch = 1.0;
-      utterance.rate = 0.95;
-
-      utterance.onstart = () => setIsSpeaking(true);
-
-      utterance.onend = () => {
-        setIsSpeaking(false);
-        if (isVoiceModeRef.current) {
-          if (recognitionRef.current) {
-            try {
-              recognitionRef.current.start();
-            } catch (e) {}
-          }
-        }
-      };
-
-      window.speechSynthesis.speak(utterance);
     }
+
+    // Ultimate Fallback
+    if (!bestVoice) {
+      bestVoice = voices.find(
+        (v) => v.lang.includes("en-IN") || v.lang.includes("hi-IN"),
+      );
+    }
+
+    if (bestVoice) utterance.voice = bestVoice;
+
+    utterance.pitch = 1.0;
+    utterance.rate = 0.95;
+
+    utterance.onstart = () => setIsSpeaking(true);
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      if (isVoiceModeRef.current && recognitionRef.current) {
+        try {
+          recognitionRef.current.start();
+        } catch (e) {}
+      }
+    };
+
+    utterance.onerror = (e) => {
+      console.error("Speech Engine Error:", e);
+      setIsSpeaking(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
   };
 
   const handleTextSubmit = (e) => {
@@ -174,7 +191,7 @@ function App() {
         body: JSON.stringify({
           message: textPayload,
           history: formattedHistory,
-          instruction: "Keep answers concise. Use Hinglish if appropriate.",
+          instruction: "Keep answers concise. Use Hinglish naturally.",
         }),
       });
 
@@ -183,6 +200,8 @@ function App() {
         throw new Error(data.error || "Server connection failed.");
 
       setMessages((prev) => [...prev, { role: "jarvis", text: data.response }]);
+
+      // Seedha text bhej rahe hain bolne ke liye
       speakResponse(data.response);
     } catch (error) {
       console.error("Frontend Error:", error.message);
@@ -190,13 +209,15 @@ function App() {
         ...prev,
         { role: "jarvis", text: `Error: ${error.message}` },
       ]);
-    } finally {
       setIsProcessing(false);
+
       if (isVoiceModeRef.current && recognitionRef.current) {
         try {
           recognitionRef.current.start();
         } catch (e) {}
       }
+    } finally {
+      setIsProcessing(false);
     }
   };
 
